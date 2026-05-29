@@ -49,6 +49,17 @@
     .alert-err{background:#fef2f2;border-left:4px solid var(--red);color:#7f1d1d}
     .alert-info{background:#eff6ff;border-left:4px solid var(--pri);color:#1e3a8a}
 
+    /* ── Chat ── */
+    .chat-row{display:flex;margin-bottom:10px}
+    .chat-row.mine{justify-content:flex-end}
+    .chat-bubble{max-width:78%;background:#fff;border:1px solid var(--lgray);border-radius:12px;padding:7px 11px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+    .chat-row.mine .chat-bubble{background:#e7eefb;border-color:#cfddf7}
+    .chat-meta{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+    .chat-name{font-size:.74rem;font-weight:700;color:var(--pri)}
+    .chat-time{font-size:.66rem;color:var(--gray)}
+    .chat-del{margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:.8rem;line-height:1;padding:0 2px}
+    .chat-text{font-size:.9rem;color:var(--text);word-wrap:break-word;white-space:pre-wrap}
+
     /* ── Cards ── */
     .card{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
     .card-title{font-size:1rem;font-weight:700;color:var(--pri);margin-bottom:14px}
@@ -450,6 +461,7 @@ const BRACKET_COUNTS={r1:16,r2:8,r3:4,r4:2,r5:1};
 // =============================================================================
 let db=null,fbOk=false,currentUser=null;
 let allUsers={},allPreds={},allResults={},appCfg={locked:false};
+let allChat={};
 let f2bracket={},f2preds={},f2results={},f2cfg={open:false,locked:false};
 let f2qualifiers=[]; // UIDs de los 32 clasificados a Fase 2
 let f2picks={},f2picksLoaded=false;
@@ -519,7 +531,7 @@ function dbDel(path){
 }
 function loadLocal(){
   const raw=JSON.parse(localStorage.getItem('pm26')||'{}');
-  allUsers=raw.users||{};allPreds=raw.preds||{};allResults=raw.results||{};appCfg=raw.config||{locked:false};
+  allUsers=raw.users||{};allPreds=raw.preds||{};allResults=raw.results||{};appCfg=raw.config||{locked:false};allChat=raw.chat||{};
 }
 
 // =============================================================================
@@ -677,6 +689,7 @@ window.addEventListener('load',()=>{
       db.ref('f2/results').on('value',s=>{f2results=s.val()||{};if(currentUser)renderApp();});
       db.ref('f2/cfg').on('value',s=>{f2cfg=s.val()||{open:false,locked:false};if(currentUser)renderApp();});
       db.ref('f2/qualifiers').on('value',s=>{f2qualifiers=s.val()||[];if(currentUser)renderApp();});
+      db.ref('chat').on('value',s=>{allChat=s.val()||{};if(currentUser&&currentView==='chat')renderChatMessages();});
       checkSession();
     }catch(err){console.error(err);toast('Error Firebase – usando modo local','warn');loadLocal();checkSession();}
   }else{loadLocal();checkSession();}
@@ -820,6 +833,7 @@ function renderApp(){
     ['pred','📝 Pronósticos'],
     ['ranking','🏆 Ranking'],
     ['bracket','🏅 Clasificados'],
+    ['chat','💬 Chat'],
     ...(locked||isAdmin?[['all','👁️ Ver todos']]:[]),
     ...((isAdmin||(f2cfg.open&&f2qualifiers.includes(currentUser.id)))&&Object.keys(f2bracket).length?[['f2','🥊 Fase 2']]:[]),
     ...(isAdmin?[['results','⚽ Resultados'],['admin','⚙️ Admin']]:[]),
@@ -829,6 +843,7 @@ function renderApp(){
   if(currentView==='pred')content=viewPred();
   else if(currentView==='ranking')content=viewRanking();
   else if(currentView==='bracket')content=viewBracket();
+  else if(currentView==='chat')content=viewChat();
   else if(currentView==='all')content=viewAll();
   else if(currentView==='f2')content=viewF2Pred();
   else if(currentView==='results'&&isAdmin)content=viewResults();
@@ -869,7 +884,77 @@ function renderApp(){
       <div class="racing-egg-inner">🏆 RACING CLUB · LA ACADEMIA · AVELLANEDA</div>
     </div>`;
 }
-function sw(v){currentView=v;renderApp();}
+function sw(v){currentView=v;renderApp();if(v==='chat')setTimeout(scrollChatBottom,60);}
+
+// =============================================================================
+//  ⑩b  VISTA: CHAT GENERAL
+// =============================================================================
+function chatMsgsHtml(){
+  const msgs=Object.entries(allChat)
+    .map(([id,m])=>({id,...m}))
+    .filter(m=>m&&m.text)
+    .sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!msgs.length)return '<p class="tc muted" style="padding:40px 14px">Todavía no hay mensajes. ¡Sé el primero en escribir! 👋</p>';
+  return msgs.map(m=>{
+    const mine=m.uid===currentUser.id;
+    const isAdmin=currentUser.isAdmin;
+    const d=new Date(m.ts||0);
+    const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+    const dd=String(d.getDate()).padStart(2,'0'),mo=String(d.getMonth()+1).padStart(2,'0');
+    const when=`${dd}/${mo} ${hh}:${mm}`;
+    const txt=String(m.text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const name=String(m.name||'?').replace(/</g,'&lt;');
+    const del=isAdmin?`<button class="chat-del" title="Borrar mensaje" onclick="delChat('${m.id}')">✕</button>`:'';
+    return `<div class="chat-row ${mine?'mine':''}">
+      <div class="chat-bubble">
+        <div class="chat-meta"><span class="chat-name">${mine?'Vos':name}</span><span class="chat-time">${when}</span>${del}</div>
+        <div class="chat-text">${txt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderChatMessages(){
+  const box=document.getElementById('chatMsgs');
+  if(!box)return;
+  const atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+  box.innerHTML=chatMsgsHtml();
+  if(atBottom)scrollChatBottom();
+}
+function scrollChatBottom(){const box=document.getElementById('chatMsgs');if(box)box.scrollTop=box.scrollHeight;}
+function viewChat(){
+  return `
+    <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:380px;padding:0;overflow:hidden">
+      <div class="card-title" style="padding:16px 20px 12px;margin:0;border-bottom:1px solid var(--lgray)">💬 Chat general · PRODEMU 2026</div>
+      <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:14px 16px;background:#f6f8fb">${chatMsgsHtml()}</div>
+      <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--lgray);background:var(--card)">
+        <input id="chatInput" type="text" maxlength="500" placeholder="Escribí un mensaje…" autocomplete="off"
+          style="flex:1;padding:10px 14px;border:2px solid var(--lgray);border-radius:8px;font-size:.95rem;outline:none"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}">
+        <button class="btn btn-pri" onclick="sendChat()">Enviar</button>
+      </div>
+    </div>`;
+}
+function sendChat(){
+  const inp=document.getElementById('chatInput');
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(!text)return;
+  const id='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const msg={uid:currentUser.id,name:currentUser.displayName,text,ts:Date.now()};
+  inp.value='';
+  dbSet('chat/'+id,msg).then(()=>{
+    if(!fbOk){allChat[id]=msg;renderChatMessages();}
+    setTimeout(scrollChatBottom,40);
+  });
+  inp.focus();
+}
+function delChat(id){
+  if(!currentUser.isAdmin)return;
+  if(!confirm('¿Borrar este mensaje?'))return;
+  dbDel('chat/'+id).then(()=>{
+    if(!fbOk){delete allChat[id];renderChatMessages();}
+  });
+}
 
 // =============================================================================
 //  ⑪  VISTA: MIS PRONÓSTICOS  (con tabla de posiciones en vivo)
@@ -1519,7 +1604,8 @@ function viewAdmin(){
         <button class="btn btn-out" onclick="exportCSV()">📊 Ranking CSV</button>
         <button class="btn btn-out" onclick="exportMatrix()">📋 Matriz de pronósticos</button>
       </div>
-    </div>`;
+    </div>
+    ${f2panel}`;
 }
 
 function toggleAddUser(){document.getElementById('addUserPanel').classList.toggle('hidden');}
