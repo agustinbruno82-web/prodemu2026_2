@@ -1575,9 +1575,22 @@ function viewResults(){
   }
   html+=`<div class="save-bar">
     <span class="sm muted">${PARTIDOS.filter(m=>allResults[m.id]).length} resultados cargados</span>
-    <button class="btn btn-pri" onclick="saveResults()">💾 Guardar resultados</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-red" onclick="clearResults()">🗑️ Borrar todos los resultados</button>
+      <button class="btn btn-pri" onclick="saveResults()">💾 Guardar resultados</button>
+    </div>
   </div>`;
   return html;
+}
+
+async function clearResults(){
+  const n=PARTIDOS.filter(m=>allResults[m.id]).length;
+  if(n===0){toast('No hay resultados cargados','info');return;}
+  if(!confirm(`¿Borrar TODOS los resultados cargados (${n})? Esto vacía los marcadores y los puntajes vuelven a cero. No se puede deshacer.`))return;
+  await dbSet('results',{});
+  allResults={};
+  toast('🗑️ Todos los resultados fueron borrados','ok');
+  renderApp();
 }
 
 async function saveResults(){
