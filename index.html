@@ -1066,12 +1066,14 @@ function viewRanking(){
     return a.tb4-b.tb4;
   });
   const me=scores.findIndex(s=>s.uid===currentUser.id),myS=userScore(currentUser.id);
+  const pozo=calcPozo();
 
   return`
     <div class="stats-row">
       <div class="stat-box"><div class="stat-val">${me>=0?'#'+(me+1):'-'}</div><div class="stat-lbl">Mi posición</div></div>
       <div class="stat-box"><div class="stat-val">${myS.t+(hasF2?f2calcScore(currentUser.id):0)}</div><div class="stat-lbl">Mis puntos${hasF2?' (F1+F2)':''}</div></div>
       <div class="stat-box"><div class="stat-val">${played}/${PARTIDOS.length}</div><div class="stat-lbl">Jugados</div></div>
+      <div class="stat-box"><div class="stat-val">$${pozo.amount.toLocaleString('es-AR')}</div><div class="stat-lbl">Pozo acumulado (${pozo.count} pagos)</div></div>
     </div>
     <div class="card"><div class="card-title">🏆 Tabla de posiciones</div>
       ${scores.length===0?'<p class="tc muted" style="padding:24px">Sin participantes registrados.</p>':`
@@ -1083,7 +1085,8 @@ function viewRanking(){
           <th title="Marcadores exactos">Exactos</th>
           <th title="Equipos clasificados correctos — 2do desempate">Clasif.</th>
           <th title="Ganadores de grupo correctos — 3er desempate">1ros</th>
-          <th>Pronós.</th></tr></thead>
+          <th>Pronós.</th>
+          <th title="Pago de inscripción">Pago</th></tr></thead>
         <tbody>${scores.map((s,i)=>{
           const pos=i+1,cls=pos===1?'rt-gold':pos===2?'rt-silver':pos===3?'rt-bronze':'';
           const med=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos;
@@ -1097,7 +1100,8 @@ function viewRanking(){
             <td>${s.tb1}</td><td>${s.e}</td>
             <td>${s.tb2>0||Object.keys(allResults).length>0?s.tb2:'–'}</td>
             <td>${s.tb3>0||Object.keys(allResults).length>0?s.tb3:'–'}</td>
-            <td>${db}</td></tr>`;
+            <td>${db}</td>
+            <td class="tc">${allUsers[s.uid]&&allUsers[s.uid].paid?'<span title="Pagó">✅</span>':'<span class="muted" title="Pendiente">⬜</span>'}</td></tr>`;
         }).join('')}</tbody>
       </table></div>
       <p class="xs muted" style="padding:6px 14px 4px">⚖️ Desempate: resultados correctos → equipos clasificados → ganadores de grupo → fecha de envío</p>
@@ -1576,12 +1580,13 @@ function viewAdmin(){
       </div>
       ${players.length===0?'<p class="tc muted" style="padding:20px">Sin participantes. Agregá jugadores para comenzar.</p>':`
       <div style="overflow-x:auto"><table class="ut">
-        <thead><tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Pronósticos</th><th>Puntos</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>#</th><th>Nombre</th><th>Usuario</th><th>Pronósticos</th><th>Puntos</th><th>Pago</th><th>Acciones</th></tr></thead>
         <tbody>${players.map(([uid,u],i)=>{
           const done=countDone(uid),sc=userScore(uid);
           const db=done===PARTIDOS.length?`<span class="badge b-grn">${done}/${PARTIDOS.length} ✓</span>`:`<span class="badge b-amb">${done}/${PARTIDOS.length}</span>`;
           return`<tr><td>${i+1}</td><td><b>${u.displayName||u.username}</b></td>
             <td><code>${u.username}</code></td><td>${db}</td><td><b>${sc.t}</b></td>
+            <td class="tc"><button class="btn btn-sm ${u.paid?'btn-grn':'btn-out'}" title="${u.paid?'Pagó — click para quitar':'Pendiente — click para marcar como pagado'}" onclick="togglePaid('${uid}')">${u.paid?'✅ Pagó':'⬜ Pendiente'}</button></td>
             <td style="display:flex;gap:6px;flex-wrap:wrap">
               <button class="btn btn-out btn-sm" onclick="resetPwd('${uid}')">🔑 Pwd</button>
               <button class="btn btn-red btn-sm" onclick="delUser('${uid}','${(u.displayName||u.username).replace(/'/g,"\\'")}')">🗑️</button>
@@ -1596,6 +1601,10 @@ function viewAdmin(){
         <div class="stat-box"><div class="stat-val">${players.filter(([id])=>countDone(id)===PARTIDOS.length).length}</div><div class="stat-lbl">Completos</div></div>
         <div class="stat-box"><div class="stat-val">${PARTIDOS.filter(m=>allResults[m.id]).length}</div><div class="stat-lbl">Resultados cargados</div></div>
       </div>
+      <div class="g2 mt2">
+        <div class="stat-box"><div class="stat-val">${calcPozo().count}/${players.length}</div><div class="stat-lbl">Pagos registrados</div></div>
+        <div class="stat-box"><div class="stat-val">$${calcPozo().amount.toLocaleString('es-AR')}</div><div class="stat-lbl">Pozo acumulado</div></div>
+      </div>
     </div>
 
     <div class="card"><div class="card-title">📥 Exportar</div>
@@ -1606,6 +1615,22 @@ function viewAdmin(){
       </div>
     </div>
     ${f2panel}`;
+}
+
+// Pozo acumulado: cuota de inscripción × participantes que pagaron
+const FEE_INSCRIPCION=40000;
+function calcPozo(){
+  const count=Object.entries(allUsers).filter(([,u])=>!u.isAdmin&&u.paid).length;
+  return{count,amount:count*FEE_INSCRIPCION};
+}
+
+async function togglePaid(uid){
+  if(!currentUser.isAdmin)return;
+  const next=!allUsers[uid].paid;
+  allUsers[uid].paid=next;
+  await dbSet(`users/${uid}/paid`,next);
+  toast(next?'✅ Pago registrado':'Pago quitado','info');
+  renderApp();
 }
 
 function toggleAddUser(){document.getElementById('addUserPanel').classList.toggle('hidden');}
@@ -1653,11 +1678,11 @@ function exportJSON(){
   dl('prodemu2026_backup.json',JSON.stringify({exportDate:new Date().toISOString(),users:allUsers,preds:allPreds,results:allResults,config:appCfg},null,2),'application/json');
 }
 function exportCSV(){
-  const rows=[['#','Nombre','Usuario','Puntos','Resultados','Exactos','Jugados','Pronósticos']];
+  const rows=[['#','Nombre','Usuario','Puntos','Resultados','Exactos','Jugados','Pronósticos','Pago']];
   Object.entries(allUsers).filter(([,u])=>!u.isAdmin)
-    .map(([uid,u])=>({name:u.displayName||u.username,user:u.username,done:countDone(uid),...userScore(uid)}))
+    .map(([uid,u])=>({name:u.displayName||u.username,user:u.username,done:countDone(uid),paid:u.paid?'Sí':'No',...userScore(uid)}))
     .sort((a,b)=>b.t-a.t||b.e-a.e)
-    .forEach((s,i)=>rows.push([i+1,`"${s.name}"`,s.user,s.t,s.r,s.e,s.played,s.done]));
+    .forEach((s,i)=>rows.push([i+1,`"${s.name}"`,s.user,s.t,s.r,s.e,s.played,s.done,s.paid]));
   dl('prodemu2026_ranking.csv',rows.map(r=>r.join(',')).join('\n'),'text/csv');
 }
 function exportMatrix(){
