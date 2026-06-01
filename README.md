@@ -23,7 +23,7 @@
 
 ## 📝 Paso 2 — Cargar tus pronósticos (Fase 1)
 
-La Fase 1 cubre los **48 partidos de la fase de grupos** del Mundial.
+La Fase 1 cubre los **72 partidos de la fase de grupos** del Mundial.
 
 **⚠️ Importante: debés cargar todos tus pronósticos antes del inicio del primer partido del Mundial.**
 
@@ -41,7 +41,7 @@ La Fase 1 cubre los **48 partidos de la fase de grupos** del Mundial.
 | Resultado incorrecto | **0 pts** |
 
 > El marcador exacto da 4 puntos en total (no 3+1).
-> Máximo posible en Fase 1: **192 puntos** (48 partidos × 4 pts)
+> Máximo posible en Fase 1: **288 puntos** (72 partidos × 4 pts)
 
 ---
 
@@ -73,6 +73,8 @@ Una vez que el admin **cierre los pronósticos**, te va a aparecer la pestaña *
 
 Avanzan a la Fase 2 los **32 jugadores mejor posicionados** al término de la Fase 1.
 
+**⭐ Importante: los puntos de la Fase 1 se arrastran a la Fase 2.** No se parte de cero: el puntaje final de cada clasificado es la **suma de los puntos de Fase 1 + los puntos que sume en Fase 2**. El ranking de la Fase 2 se ordena por ese total acumulado.
+
 **⚠️ Regla clave: debés completar el bracket entero (hasta la Final) antes del inicio del primer partido de los 32avos de final. No se puede guardar un bracket incompleto.**
 
 Si clasificás, te va a aparecer la pestaña **"🥊 Fase 2"** donde tenés que pronosticar el avance en cada ronda del cuadro eliminatorio.
@@ -99,8 +101,8 @@ Si clasificás, te va a aparecer la pestaña **"🥊 Fase 2"** donde tenés que 
 | Posición | Premio |
 |----------|--------|
 | 🥇 Campeón Fase 2 (1° lugar F1 + F2) | **$1.400.000 ARS** (70% del pozo) |
-| 🥈 Finalista Fase 2 (2° lugar F1 + F2) | **$400.000 ARS** (20% del pozo) |
-| 🏅 Ganador Fase 1 (1° lugar solo F1) | **$200.000 ARS** (10% del pozo) |
+| 🏅 Ganador Fase 1 (1° lugar solo F1) | **$400.000 ARS** (20% del pozo) |
+| 🥈 Finalista Fase 2 (2° lugar F1 + F2) | **$200.000 ARS** (10% del pozo) |
 
 ---
 
