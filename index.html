@@ -58,6 +58,14 @@
     .chat-name{font-size:.74rem;font-weight:700;color:var(--pri)}
     .chat-time{font-size:.66rem;color:var(--gray)}
     .chat-del{margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:.8rem;line-height:1;padding:0 2px}
+    .chat-reply{background:none;border:none;color:var(--pri);cursor:pointer;font-size:.78rem;line-height:1;padding:0 2px}
+    .chat-bubble.priv{background:#fff7e6;border-color:#f3d488}
+    .chat-row.mine .chat-bubble.priv{background:#fdeccf;border-color:#eecb8a}
+    .chat-priv-badge{display:inline-block;font-size:.62rem;font-weight:700;color:#9a6b00;background:#fde9bf;border:1px solid #f0d089;border-radius:10px;padding:1px 7px;margin-bottom:3px}
+    .chat-privchk{display:flex;align-items:center;gap:7px;font-size:.8rem;color:var(--gray);padding:8px 14px 0;cursor:pointer;user-select:none}
+    .chat-privchk input{width:16px;height:16px;cursor:pointer}
+    .chat-privbar{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#9a6b00;background:#fff7e6;border-top:1px solid #f0d089;padding:8px 14px}
+    .chat-privbar button{margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem}
     .chat-text{font-size:.9rem;color:var(--text);word-wrap:break-word;white-space:pre-wrap}
 
     /* ── Cards ── */
@@ -890,24 +898,38 @@ function sw(v){currentView=v;renderApp();if(v==='chat')setTimeout(scrollChatBott
 //  ⑩b  VISTA: CHAT GENERAL
 // =============================================================================
 function chatMsgsHtml(){
+  const isAdmin=currentUser.isAdmin;
   const msgs=Object.entries(allChat)
     .map(([id,m])=>({id,...m}))
     .filter(m=>m&&m.text)
+    // Un mensaje privado solo lo ven: el organizador, quien lo envió y su destinatario
+    .filter(m=>!m.priv||isAdmin||m.uid===currentUser.id||m.to===currentUser.id)
     .sort((a,b)=>(a.ts||0)-(b.ts||0));
   if(!msgs.length)return '<p class="tc muted" style="padding:40px 14px">Todavía no hay mensajes. ¡Sé el primero en escribir! 👋</p>';
   return msgs.map(m=>{
     const mine=m.uid===currentUser.id;
-    const isAdmin=currentUser.isAdmin;
     const d=new Date(m.ts||0);
     const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
     const dd=String(d.getDate()).padStart(2,'0'),mo=String(d.getMonth()+1).padStart(2,'0');
     const when=`${dd}/${mo} ${hh}:${mm}`;
     const txt=String(m.text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const name=String(m.name||'?').replace(/</g,'&lt;');
+    // Etiqueta del mensaje privado según quién lo mira
+    let badge='';
+    if(m.priv){
+      let lbl;
+      if(mine) lbl=isAdmin?`Privado a ${String((allUsers[m.to]||{}).displayName||'?').replace(/</g,'&lt;')}`:'Privado al organizador';
+      else if(isAdmin) lbl='Privado para el organizador';
+      else lbl='Privado del organizador';
+      badge=`<span class="chat-priv-badge">🔒 ${lbl}</span>`;
+    }
     const del=isAdmin?`<button class="chat-del" title="Borrar mensaje" onclick="delChat('${m.id}')">✕</button>`:'';
+    // El organizador puede responder en privado a cualquier mensaje ajeno
+    const reply=(isAdmin&&!mine)?`<button class="chat-reply" title="Responder en privado" onclick="replyPriv('${m.uid}')">↩︎</button>`:'';
     return `<div class="chat-row ${mine?'mine':''}">
-      <div class="chat-bubble">
-        <div class="chat-meta"><span class="chat-name">${mine?'Vos':name}</span><span class="chat-time">${when}</span>${del}</div>
+      <div class="chat-bubble${m.priv?' priv':''}">
+        ${badge?`<div>${badge}</div>`:''}
+        <div class="chat-meta"><span class="chat-name">${mine?'Vos':name}</span><span class="chat-time">${when}</span>${reply}${del}</div>
         <div class="chat-text">${txt}</div>
       </div>
     </div>`;
@@ -921,19 +943,39 @@ function renderChatMessages(){
   if(atBottom)scrollChatBottom();
 }
 function scrollChatBottom(){const box=document.getElementById('chatMsgs');if(box)box.scrollTop=box.scrollHeight;}
+let chatPrivTo=null; // organizador respondiendo en privado a este uid
+function chatControlsHtml(){
+  let bar='';
+  if(currentUser.isAdmin){
+    if(chatPrivTo){
+      const n=String((allUsers[chatPrivTo]||{}).displayName||'?').replace(/</g,'&lt;');
+      bar=`<div class="chat-privbar">🔒 Respondiendo en privado a <b>${n}</b><button title="Cancelar" onclick="cancelPriv()">✕</button></div>`;
+    }
+  }else{
+    bar=`<label class="chat-privchk"><input type="checkbox" id="chatPriv"> 🔒 Enviar solo al organizador (privado)</label>`;
+  }
+  return `${bar}
+    <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--lgray);background:var(--card)">
+      <input id="chatInput" type="text" maxlength="500" placeholder="${chatPrivTo?'Mensaje privado…':'Escribí un mensaje…'}" autocomplete="off"
+        style="flex:1;padding:10px 14px;border:2px solid var(--lgray);border-radius:8px;font-size:.95rem;outline:none"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}">
+      <button class="btn btn-pri" onclick="sendChat()">Enviar</button>
+    </div>`;
+}
 function viewChat(){
   return `
     <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:380px;padding:0;overflow:hidden">
       <div class="card-title" style="padding:16px 20px 12px;margin:0;border-bottom:1px solid var(--lgray)">💬 Chat general · PRODEMU 2026</div>
       <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:14px 16px;background:#f6f8fb">${chatMsgsHtml()}</div>
-      <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--lgray);background:var(--card)">
-        <input id="chatInput" type="text" maxlength="500" placeholder="Escribí un mensaje…" autocomplete="off"
-          style="flex:1;padding:10px 14px;border:2px solid var(--lgray);border-radius:8px;font-size:.95rem;outline:none"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}">
-        <button class="btn btn-pri" onclick="sendChat()">Enviar</button>
-      </div>
+      <div id="chatControls">${chatControlsHtml()}</div>
     </div>`;
 }
+function renderChatControls(){
+  const c=document.getElementById('chatControls');
+  if(c){c.innerHTML=chatControlsHtml();const i=document.getElementById('chatInput');if(i)i.focus();}
+}
+function replyPriv(uid){chatPrivTo=uid;renderChatControls();}
+function cancelPriv(){chatPrivTo=null;renderChatControls();}
 function sendChat(){
   const inp=document.getElementById('chatInput');
   if(!inp)return;
@@ -941,9 +983,18 @@ function sendChat(){
   if(!text)return;
   const id='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const msg={uid:currentUser.id,name:currentUser.displayName,text,ts:Date.now()};
+  // Marcar como privado: organizador respondiendo, o participante con el tilde activo
+  if(currentUser.isAdmin){
+    if(chatPrivTo){msg.priv=true;msg.to=chatPrivTo;}
+  }else{
+    const chk=document.getElementById('chatPriv');
+    if(chk&&chk.checked)msg.priv=true; // dirigido al organizador
+  }
   inp.value='';
+  const wasReply=currentUser.isAdmin&&chatPrivTo;
   dbSet('chat/'+id,msg).then(()=>{
     if(!fbOk){allChat[id]=msg;renderChatMessages();}
+    if(wasReply){chatPrivTo=null;renderChatControls();}
     setTimeout(scrollChatBottom,40);
   });
   inp.focus();
