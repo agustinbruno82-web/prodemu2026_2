@@ -428,25 +428,31 @@ const PARTIDOS = [
   {id:'m72',grupo:'L',groupName:'Grupo L',home:'Panamá',            away:'Inglaterra',         date:'27/06',time:'18:00',sede:'Nueva Jersey'},
 ]; // 72 partidos
 
-// 16avos de Final – cruces predefinidos FIFA 2026
-// ⚠️  Verificar con el fixture oficial. Estructura: 1° grupo X vs 2° grupo Y
+// 16avos de Final – cruces oficiales FIFA 2026
+// Fuente: fixture oficial FIFA (partidos M73–M88)
+// Los 3° clasificados se asignan por ranking general (mejor al peor).
+// El orden de los partidos respeta las llaves de cuartos/semis del bracket oficial.
 const R32=[
-  {id:'r1', home:'1A',away:'2B',label:'16vo 1'},
-  {id:'r2', home:'1C',away:'2D',label:'16vo 2'},
-  {id:'r3', home:'1E',away:'2F',label:'16vo 3'},
-  {id:'r4', home:'1G',away:'2H',label:'16vo 4'},
-  {id:'r5', home:'1I',away:'2J',label:'16vo 5'},
-  {id:'r6', home:'1K',away:'2L',label:'16vo 6'},
-  {id:'r7', home:'1B',away:'2A',label:'16vo 7'},
-  {id:'r8', home:'1D',away:'2C',label:'16vo 8'},
-  {id:'r9', home:'1F',away:'2E',label:'16vo 9'},
-  {id:'r10',home:'1H',away:'2G',label:'16vo 10'},
-  {id:'r11',home:'1J',away:'2I',label:'16vo 11'},
-  {id:'r12',home:'1L',away:'2K',label:'16vo 12'},
-  {id:'r13',home:'3-1',away:'3-2',label:'16vo 13'},
-  {id:'r14',home:'3-3',away:'3-4',label:'16vo 14'},
-  {id:'r15',home:'3-5',away:'3-6',label:'16vo 15'},
-  {id:'r16',home:'3-7',away:'3-8',label:'16vo 16'},
+  // ── Llave 1 (→ QF M97 → SF M101) ──────────────────────────────────────────
+  {id:'r1', home:'1E',away:'3-1',label:'16vo 1'},   // M74: 1°E vs mejor 3° (A/B/C/D/F)
+  {id:'r2', home:'1I',away:'3-2',label:'16vo 2'},   // M77: 1°I vs mejor 3° (C/D/F/G/H)
+  {id:'r3', home:'2A',away:'2B',label:'16vo 3'},    // M73: 2°A vs 2°B
+  {id:'r4', home:'1F',away:'2C',label:'16vo 4'},    // M75: 1°F vs 2°C
+  // ── Llave 2 (→ QF M98 → SF M101) ──────────────────────────────────────────
+  {id:'r5', home:'2K',away:'2L',label:'16vo 5'},    // M83: 2°K vs 2°L
+  {id:'r6', home:'1H',away:'2J',label:'16vo 6'},    // M84: 1°H vs 2°J
+  {id:'r7', home:'1D',away:'3-3',label:'16vo 7'},   // M81: 1°D vs mejor 3° (B/E/F/I/J)
+  {id:'r8', home:'1G',away:'3-4',label:'16vo 8'},   // M82: 1°G vs mejor 3° (A/E/H/I/J)
+  // ── Llave 3 (→ QF M99 → SF M102) ──────────────────────────────────────────
+  {id:'r9', home:'1C',away:'2F',label:'16vo 9'},    // M76: 1°C vs 2°F
+  {id:'r10',home:'2E',away:'2I',label:'16vo 10'},   // M78: 2°E vs 2°I
+  {id:'r11',home:'1A',away:'3-5',label:'16vo 11'},  // M79: 1°A vs mejor 3° (C/E/F/H/I)
+  {id:'r12',home:'1L',away:'3-6',label:'16vo 12'},  // M80: 1°L vs mejor 3° (E/H/I/J/K)
+  // ── Llave 4 (→ QF M100 → SF M102) ─────────────────────────────────────────
+  {id:'r13',home:'1J',away:'2H',label:'16vo 13'},   // M86: 1°J vs 2°H  ← Argentina
+  {id:'r14',home:'2D',away:'2G',label:'16vo 14'},   // M88: 2°D vs 2°G
+  {id:'r15',home:'1B',away:'3-7',label:'16vo 15'},  // M85: 1°B vs mejor 3° (E/F/G/I/J)
+  {id:'r16',home:'1K',away:'3-8',label:'16vo 16'},  // M87: 1°K vs mejor 3° (D/E/I/J/L)
 ];
 
 
