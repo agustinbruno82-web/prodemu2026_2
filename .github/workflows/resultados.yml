@@ -1,0 +1,33 @@
+name: Actualizar resultados PRODEMU
+
+on:
+  schedule:
+    - cron: "*/30 * 11-30 6 *"
+    - cron: "*/30 * 1-19 7 *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Modo prueba (no escribe en Firebase)"
+        type: boolean
+        default: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backup de la base completa
+        run: curl -s "https://prodemu-default-rtdb.firebaseio.com/.json" -o backup.json
+
+      - name: Guardar backup (se conserva 30 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_id }}
+          path: backup.json
+
+      - name: Cargar resultados en Firebase
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+        run: python3 actualizar_resultados.py
