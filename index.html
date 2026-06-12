@@ -158,10 +158,6 @@
     .login-wrap{display:flex;justify-content:center;align-items:center;min-height:100vh;
                 background:linear-gradient(160deg,#0a1628 0%,#1a2c5b 40%,#2d4a8a 70%,#74a8c4 100%);
                 position:relative;overflow:hidden}
-    /* Rayas de Racing – guiño discreto en el fondo */
-    .login-wrap::before{content:'';position:absolute;inset:0;
-      background:repeating-linear-gradient(90deg,transparent 0,transparent 38px,rgba(110,190,230,.06) 38px,rgba(110,190,230,.06) 52px);
-      pointer-events:none}
     .login-wrap::after{content:'';display:none}
     .login-players{position:absolute;bottom:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
     .login-card{background:#fff;border-radius:18px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,.45);position:relative;z-index:1}
@@ -238,14 +234,28 @@
     .ps-img:hover{filter:none}
     .ps-label{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
       font-size:.55rem;color:rgba(255,255,255,.5);letter-spacing:.5px;white-space:nowrap}
-    /* Racing Club easter egg – muy discreto */
-    .racing-egg{position:fixed;bottom:8px;right:12px;z-index:100;opacity:.18;
-      transition:opacity .3s;cursor:default;user-select:none}
-    .racing-egg:hover{opacity:.85}
-    .racing-egg-inner{display:flex;align-items:center;gap:4px;
-      background:repeating-linear-gradient(90deg,#fff 0,#fff 6px,#6cb4e4 6px,#6cb4e4 12px);
-      padding:3px 8px;border-radius:6px;font-size:.62rem;font-weight:800;color:#1a2c5b;
-      box-shadow:0 1px 4px rgba(0,0,0,.3);letter-spacing:.5px;white-space:nowrap}
+    /* ── Chat: respuestas, menciones y emojis ── */
+    .chat-quote{background:rgba(26,44,91,.08);border-left:3px solid var(--pri2);
+      padding:5px 9px;border-radius:6px;margin:4px 0 6px;font-size:.78rem;color:#444;
+      cursor:pointer;line-height:1.3;word-break:break-word}
+    .chat-quote b{color:var(--pri)}
+    .mention{color:var(--pri2);font-weight:700;background:rgba(45,74,138,.1);border-radius:4px;padding:0 3px}
+    .chat-replybar{display:flex;align-items:center;gap:8px;padding:8px 14px;
+      background:#eef2fb;border-top:1px solid var(--lgray);font-size:.82rem}
+    .chat-replybar-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555}
+    .chat-replybar button{border:none;background:none;cursor:pointer;font-size:.95rem;color:#666}
+    .mention-dd{position:absolute;bottom:calc(100% - 4px);left:14px;min-width:200px;max-height:200px;
+      overflow-y:auto;background:#fff;border:1px solid var(--lgray);border-radius:10px;
+      box-shadow:0 -3px 14px rgba(0,0,0,.15);z-index:60}
+    .mention-dd div{padding:9px 14px;cursor:pointer;font-size:.88rem;border-bottom:1px solid #f3f4f6}
+    .mention-dd div:last-child{border-bottom:none}
+    .mention-dd div:hover{background:#eef2fb}
+    .emoji-panel{position:absolute;bottom:calc(100% - 4px);right:14px;background:#fff;
+      border:1px solid var(--lgray);border-radius:12px;box-shadow:0 -3px 14px rgba(0,0,0,.18);
+      padding:8px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;z-index:60;
+      width:296px;max-width:calc(100vw - 40px)}
+    .emoji-panel span{font-size:1.3rem;padding:5px;cursor:pointer;text-align:center;border-radius:6px;line-height:1}
+    .emoji-panel span:hover{background:#eef2fb}
 
     /* ── Users table ── */
     .ut{width:100%;border-collapse:collapse}
@@ -792,17 +802,7 @@ function renderLogin(){
           <p class="tc sm muted mt2">¿Sin usuario? Contactá al Comité Organizador: <a href="mailto:prodemu2026@gmail.com" style="color:var(--pri);font-weight:600">prodemu2026@gmail.com</a></p>
           ${!FIREBASE_CONFIG.apiKey?'<div class="alert alert-warn mt2 sm"><b>Modo local activo</b> – datos guardados solo en este navegador.</div>':''}
 
-          <!-- Racing Club – guiño muy discreto -->
-          <div style="margin-top:28px;text-align:center">
-            <div style="display:inline-block;
-              background:repeating-linear-gradient(90deg,#fff 0,#fff 7px,#6cb4e4 7px,#6cb4e4 14px);
-              padding:3px 12px;border-radius:8px;font-size:.6rem;font-weight:800;
-              color:#1a2c5b;letter-spacing:.8px;opacity:.55;cursor:default"
-              title="La Academia siempre presente 🏆">
-              🏆 LA ACADEMIA
-            </div>
           </div>
-        </div>
       </div>
 
     </div>`;
@@ -892,11 +892,7 @@ function renderApp(){
       <div class="player-strip">${stripHtml}</div>
       <nav>${nav}</nav>
     </div>
-    <div class="main">${content}</div>
-    <!-- Racing Club – easter egg fijo, hover para revelar -->
-    <div class="racing-egg" title="La Academia 🏆">
-      <div class="racing-egg-inner">🏆 RACING CLUB · LA ACADEMIA · AVELLANEDA</div>
-    </div>`;
+    <div class="main">${content}</div>`;
 }
 function sw(v){currentView=v;renderApp();if(v==='chat')setTimeout(scrollChatBottom,60);}
 
@@ -905,6 +901,17 @@ function sw(v){currentView=v;renderApp();if(v==='chat')setTimeout(scrollChatBott
 // =============================================================================
 function chatMsgsHtml(){
   const isAdmin=currentUser.isAdmin;
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const allNames=Object.values(allUsers).map(u=>u&&u.displayName).filter(Boolean)
+    .sort((a,b)=>b.length-a.length);
+  const fmt=t=>{
+    let h=esc(t);
+    if(allNames.length){
+      const pat=new RegExp('@('+allNames.map(n=>esc(n).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','g');
+      h=h.replace(pat,'<span class="mention">@$1</span>');
+    }
+    return h.replace(/\n/g,'<br>');
+  };
   const msgs=Object.entries(allChat)
     .map(([id,m])=>({id,...m}))
     .filter(m=>m&&m.text)
@@ -918,7 +925,7 @@ function chatMsgsHtml(){
     const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
     const dd=String(d.getDate()).padStart(2,'0'),mo=String(d.getMonth()+1).padStart(2,'0');
     const when=`${dd}/${mo} ${hh}:${mm}`;
-    const txt=String(m.text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const txt=fmt(m.text);
     const name=String(m.name||'?').replace(/</g,'&lt;');
     // Etiqueta del mensaje privado según quién lo mira
     let badge='';
@@ -930,12 +937,15 @@ function chatMsgsHtml(){
       badge=`<span class="chat-priv-badge">🔒 ${lbl}</span>`;
     }
     const del=isAdmin?`<button class="chat-del" title="Borrar mensaje" onclick="delChat('${m.id}')">✕</button>`:'';
-    // El organizador puede responder en privado a cualquier mensaje ajeno
-    const reply=(isAdmin&&!mine)?`<button class="chat-reply" title="Responder en privado" onclick="replyPriv('${m.uid}')">↩︎</button>`:'';
-    return `<div class="chat-row ${mine?'mine':''}">
+    // Cualquiera puede responder citando; el organizador además puede responder en privado
+    const quoteBtn=m.priv?'':`<button class="chat-reply" title="Responder" onclick="replyMsg('${m.id}')">↩︎</button>`;
+    const replyPrivBtn=(isAdmin&&!mine)?`<button class="chat-reply" title="Responder en privado" onclick="replyPriv('${m.uid}')">🔒</button>`:'';
+    const quote=m.reply?`<div class="chat-quote" onclick="scrollToMsg('${esc(m.reply.id||'')}')"><b>${esc(m.reply.name||'?')}</b><br>${fmt(m.reply.text||'')}</div>`:'';
+    return `<div class="chat-row ${mine?'mine':''}" id="msg_${m.id}">
       <div class="chat-bubble${m.priv?' priv':''}">
         ${badge?`<div>${badge}</div>`:''}
-        <div class="chat-meta"><span class="chat-name">${mine?'Vos':name}</span><span class="chat-time">${when}</span>${reply}${del}</div>
+        <div class="chat-meta"><span class="chat-name">${mine?'Vos':name}</span><span class="chat-time">${when}</span>${quoteBtn}${replyPrivBtn}${del}</div>
+        ${quote}
         <div class="chat-text">${txt}</div>
       </div>
     </div>`;
@@ -949,7 +959,9 @@ function renderChatMessages(){
   if(atBottom)scrollChatBottom();
 }
 function scrollChatBottom(){const box=document.getElementById('chatMsgs');if(box)box.scrollTop=box.scrollHeight;}
-let chatPrivTo=null; // organizador respondiendo en privado a este uid
+let chatPrivTo=null;   // organizador respondiendo en privado a este uid
+let chatReplyTo=null;  // id del mensaje que se está citando
+const CHAT_EMOJIS=['😀','😂','🤣','😅','😊','😉','😜','😎','🤔','😬','😢','😭','😡','🥳','🤩','😱','🤦','🤷','😴','🫣','👍','👎','👏','🙌','💪','🙏','🤝','✌️','❤️','💔','🔥','💀','⚽','🥅','🧤','🏆','🥇','🎉','🍻','🇦🇷'];
 function chatControlsHtml(){
   let bar='';
   if(currentUser.isAdmin){
@@ -960,13 +972,74 @@ function chatControlsHtml(){
   }else{
     bar=`<label class="chat-privchk"><input type="checkbox" id="chatPriv"> 🔒 Enviar solo al organizador (privado)</label>`;
   }
-  return `${bar}
-    <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--lgray);background:var(--card)">
-      <input id="chatInput" type="text" maxlength="500" placeholder="${chatPrivTo?'Mensaje privado…':'Escribí un mensaje…'}" autocomplete="off"
-        style="flex:1;padding:10px 14px;border:2px solid var(--lgray);border-radius:8px;font-size:.95rem;outline:none"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}">
+  let replyBar='';
+  if(chatReplyTo&&allChat[chatReplyTo]){
+    const rm=allChat[chatReplyTo];
+    const n=String(rm.name||'?').replace(/</g,'&lt;');
+    const t=String(rm.text||'').slice(0,90).replace(/</g,'&lt;');
+    replyBar=`<div class="chat-replybar">↩︎ Respondiendo a <b>${n}</b>:<span class="chat-replybar-txt">${t}</span><button title="Cancelar" onclick="cancelReply()">✕</button></div>`;
+  }
+  return `${bar}${replyBar}
+    <div style="position:relative;display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--lgray);background:var(--card);align-items:flex-end">
+      <div id="mentionDD" class="mention-dd" style="display:none"></div>
+      <div id="emojiPanel" class="emoji-panel" style="display:none">${CHAT_EMOJIS.map(e=>`<span onclick="insEmoji('${e}')">${e}</span>`).join('')}</div>
+      <textarea id="chatInput" rows="2" maxlength="500" autocomplete="off"
+        placeholder="${chatPrivTo?'Mensaje privado…':'Escribí un mensaje… (@ para mencionar)'}"
+        style="flex:1;padding:10px 14px;border:2px solid var(--lgray);border-radius:8px;font-size:.95rem;outline:none;resize:none;font-family:inherit;line-height:1.4"
+        onkeydown="chatKeydown(event)" oninput="chatInputChanged()"></textarea>
+      <button type="button" title="Emojis" onclick="toggleEmoji()"
+        style="padding:7px 10px;font-size:1.2rem;background:#f1f3f8;border:2px solid var(--lgray);border-radius:8px;cursor:pointer">😊</button>
       <button class="btn btn-pri" onclick="sendChat()">Enviar</button>
     </div>`;
+}
+function chatKeydown(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();return;}
+  if(e.key==='Escape'){hideMention();hideEmoji();}
+}
+function chatInputChanged(){
+  const inp=document.getElementById('chatInput'),dd=document.getElementById('mentionDD');
+  if(!inp||!dd)return;
+  const pos=inp.selectionStart,txt=inp.value.slice(0,pos);
+  const m=txt.match(/@([^\s@]{0,20})$/);
+  if(!m){dd.style.display='none';return;}
+  const q=m[1].toLowerCase();
+  const opts=Object.values(allUsers).map(u=>u&&u.displayName).filter(Boolean)
+    .filter(n=>n.toLowerCase().startsWith(q))
+    .sort((a,b)=>a.localeCompare(b)).slice(0,8);
+  if(!opts.length){dd.style.display='none';return;}
+  dd.innerHTML=opts.map(n=>{
+    const safe=n.replace(/\\/g,'').replace(/'/g,"\\'").replace(/</g,'&lt;');
+    return `<div onclick="pickMention('${safe}')">👤 ${n.replace(/</g,'&lt;')}</div>`;
+  }).join('');
+  dd.style.display='block';
+}
+function pickMention(name){
+  const inp=document.getElementById('chatInput');
+  if(!inp)return;
+  const pos=inp.selectionStart,txt=inp.value.slice(0,pos);
+  const start=txt.lastIndexOf('@');
+  inp.value=inp.value.slice(0,start)+'@'+name+' '+inp.value.slice(pos);
+  hideMention();inp.focus();
+  const np=start+name.length+2;inp.setSelectionRange(np,np);
+}
+function hideMention(){const dd=document.getElementById('mentionDD');if(dd)dd.style.display='none';}
+function toggleEmoji(){const p=document.getElementById('emojiPanel');if(p)p.style.display=(p.style.display==='none'?'grid':'none');}
+function hideEmoji(){const p=document.getElementById('emojiPanel');if(p)p.style.display='none';}
+function insEmoji(e){
+  const inp=document.getElementById('chatInput');
+  if(!inp)return;
+  const pos=inp.selectionStart;
+  inp.value=inp.value.slice(0,pos)+e+inp.value.slice(inp.selectionEnd);
+  inp.focus();const np=pos+e.length;inp.setSelectionRange(np,np);
+}
+function replyMsg(id){chatReplyTo=id;renderChatControls();}
+function cancelReply(){chatReplyTo=null;renderChatControls();}
+function scrollToMsg(id){
+  const el=document.getElementById('msg_'+id);
+  if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.style.transition='background .4s';el.style.background='rgba(200,168,75,.3)';el.style.borderRadius='10px';
+  setTimeout(()=>{el.style.background='';},1400);
 }
 function viewChat(){
   return `
@@ -980,15 +1053,21 @@ function renderChatControls(){
   const c=document.getElementById('chatControls');
   if(c){c.innerHTML=chatControlsHtml();const i=document.getElementById('chatInput');if(i)i.focus();}
 }
-function replyPriv(uid){chatPrivTo=uid;renderChatControls();}
+function replyPriv(uid){chatPrivTo=uid;chatReplyTo=null;renderChatControls();}
 function cancelPriv(){chatPrivTo=null;renderChatControls();}
 function sendChat(){
   const inp=document.getElementById('chatInput');
   if(!inp)return;
   const text=inp.value.trim();
   if(!text)return;
+  hideMention();hideEmoji();
   const id='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   const msg={uid:currentUser.id,name:currentUser.displayName,text,ts:Date.now()};
+  // Cita del mensaje respondido
+  if(chatReplyTo&&allChat[chatReplyTo]){
+    const rm=allChat[chatReplyTo];
+    msg.reply={id:chatReplyTo,name:rm.name||'?',text:String(rm.text||'').slice(0,140)};
+  }
   // Marcar como privado: organizador respondiendo, o participante con el tilde activo
   if(currentUser.isAdmin){
     if(chatPrivTo){msg.priv=true;msg.to=chatPrivTo;}
@@ -997,10 +1076,12 @@ function sendChat(){
     if(chk&&chk.checked)msg.priv=true; // dirigido al organizador
   }
   inp.value='';
-  const wasReply=currentUser.isAdmin&&chatPrivTo;
+  const wasReply=currentUser.isAdmin&&chatPrivTo,hadQuote=!!chatReplyTo;
   dbSet('chat/'+id,msg).then(()=>{
     if(!fbOk){allChat[id]=msg;renderChatMessages();}
-    if(wasReply){chatPrivTo=null;renderChatControls();}
+    if(wasReply)chatPrivTo=null;
+    if(hadQuote)chatReplyTo=null;
+    if(wasReply||hadQuote)renderChatControls();
     setTimeout(scrollChatBottom,40);
   });
   inp.focus();
