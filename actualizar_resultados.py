@@ -129,8 +129,12 @@ def http_json(url, headers=None, method="GET", data=None):
     if data is not None:
         req.data = json.dumps(data).encode()
         req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="replace")
+        raise RuntimeError(f"HTTP {e.code} {e.reason} → {body[:300]}") from None
 
 
 def traducir(nombre_api):
@@ -175,6 +179,8 @@ def main():
     api = http_json(API_URL, headers={"X-Auth-Token": TOKEN})
     api_matches = api.get("matches", [])
     print(f"API: {len(api_matches)} partidos finalizados informados")
+    for m in api_matches:
+        print(f"  · {m['homeTeam']['name']} vs {m['awayTeam']['name']} — {m['score']['fullTime']}")
 
     actuales = http_json(f"{FIREBASE_URL}/results.json") or {}
     print(f"Firebase: {len(actuales)} resultados ya cargados")
@@ -192,8 +198,12 @@ def main():
     if DRY_RUN:
         print("DRY_RUN activo: no se escribió nada en Firebase.")
     else:
-        http_json(f"{FIREBASE_URL}/results.json", method="PATCH", data=nuevos)
-        print(f"Escritos {len(nuevos)} resultados nuevos en Firebase.")
+        try:
+            http_json(f"{FIREBASE_URL}/results.json", method="PATCH", data=nuevos)
+            print(f"✅ Escritos {len(nuevos)} resultados nuevos en Firebase.")
+        except RuntimeError as e:
+            print(f"❌ ERROR al escribir en Firebase: {e}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
