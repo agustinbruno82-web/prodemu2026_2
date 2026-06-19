@@ -6,6 +6,7 @@
   <title>PRODEMU 2026 – Mundial USA · Canadá · México</title>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <style>
     :root {
       --pri:#1a2c5b; --pri2:#2d4a8a; --gold:#c8a84b; --red:#dc2626;
@@ -703,21 +704,33 @@ window.addEventListener('load',()=>{
   if(hasCfg){
     try{
       if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
-      db=firebase.database();fbOk=true;
-      db.ref('users').on('value',s=>{allUsers=s.val()||{};if(currentUser)renderApp();});
-      db.ref('preds').on('value',s=>{allPreds=s.val()||{};if(currentUser)renderApp();});
-      db.ref('results').on('value',s=>{allResults=s.val()||{};if(currentUser)renderApp();});
-      db.ref('config').on('value',s=>{appCfg=s.val()||{locked:false};if(currentUser)renderApp();});
-      db.ref('f2/bracket').on('value',s=>{f2bracket=s.val()||{};if(currentUser)renderApp();});
-      db.ref('f2/preds').on('value',s=>{f2preds=s.val()||{};if(currentUser)renderApp();});
-      db.ref('f2/results').on('value',s=>{f2results=s.val()||{};if(currentUser)renderApp();});
-      db.ref('f2/cfg').on('value',s=>{f2cfg=s.val()||{open:false,locked:false};if(currentUser)renderApp();});
-      db.ref('f2/qualifiers').on('value',s=>{f2qualifiers=s.val()||[];if(currentUser)renderApp();});
-      db.ref('chat').on('value',s=>{allChat=s.val()||{};if(currentUser&&currentView==='chat')renderChatMessages();});
-      checkSession();
+      db=firebase.database();
+      // La base ahora exige autenticación: pedimos un token anónimo antes de leer/escribir.
+      firebase.auth().signInAnonymously().then(()=>{
+        fbOk=true;
+        attachDbListeners();
+        checkSession();
+      }).catch(err=>{
+        console.error(err);
+        toast('No se pudo autenticar con Firebase – modo local','warn');
+        loadLocal();checkSession();
+      });
     }catch(err){console.error(err);toast('Error Firebase – usando modo local','warn');loadLocal();checkSession();}
   }else{loadLocal();checkSession();}
 });
+
+function attachDbListeners(){
+  db.ref('users').on('value',s=>{allUsers=s.val()||{};if(currentUser)renderApp();});
+  db.ref('preds').on('value',s=>{allPreds=s.val()||{};if(currentUser)renderApp();});
+  db.ref('results').on('value',s=>{allResults=s.val()||{};if(currentUser)renderApp();});
+  db.ref('config').on('value',s=>{appCfg=s.val()||{locked:false};if(currentUser)renderApp();});
+  db.ref('f2/bracket').on('value',s=>{f2bracket=s.val()||{};if(currentUser)renderApp();});
+  db.ref('f2/preds').on('value',s=>{f2preds=s.val()||{};if(currentUser)renderApp();});
+  db.ref('f2/results').on('value',s=>{f2results=s.val()||{};if(currentUser)renderApp();});
+  db.ref('f2/cfg').on('value',s=>{f2cfg=s.val()||{open:false,locked:false};if(currentUser)renderApp();});
+  db.ref('f2/qualifiers').on('value',s=>{f2qualifiers=s.val()||[];if(currentUser)renderApp();});
+  db.ref('chat').on('value',s=>{allChat=s.val()||{};if(currentUser&&currentView==='chat')renderChatMessages();});
+}
 
 function checkSession(){
   const s=sessionStorage.getItem('pm26_user');
@@ -818,17 +831,6 @@ async function doLogin(){
   let found=null;
   for(const[id,usr]of Object.entries(allUsers))
     if((usr.username||'').toLowerCase()===u&&usr.passwordHash===hash){found={id,...usr};break;}
-  if(!found&&u==='admin'){
-    const ah=await hashPwd('Yayaputo2026');
-    if(hash===ah){
-      const uid='u_admin';
-      if(!allUsers[uid]){
-        const nu={username:'admin',passwordHash:ah,displayName:'Comité Organizador',isAdmin:true,createdAt:Date.now()};
-        allUsers[uid]=nu;await dbSet(`users/${uid}`,nu);
-      }
-      found={id:'u_admin',...allUsers['u_admin']};
-    }
-  }
   if(!found){e.textContent='Usuario o contraseña incorrectos';e.classList.remove('hidden');return;}
   currentUser=found;sessionStorage.setItem('pm26_user',JSON.stringify(currentUser));
   currentView=found.isAdmin?'admin':'pred';renderApp();
