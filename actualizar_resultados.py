@@ -20,6 +20,8 @@ import unicodedata
 import urllib.request
 
 FIREBASE_URL = "https://prodemu-default-rtdb.firebaseio.com"
+# Clave web pública del proyecto (la misma que está en index.html). No es secreta.
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "AIzaSyAk9rmCeKgYIMv7Fngul6RPv7r09-OE0YA")
 API_URL = "https://api.football-data.org/v4/competitions/WC/matches?status=FINISHED"
 TOKEN = os.environ.get("FOOTBALL_DATA_TOKEN", "")
 DRY_RUN = os.environ.get("DRY_RUN", "") not in ("", "0", "false")
@@ -137,6 +139,19 @@ def http_json(url, headers=None, method="GET", data=None):
         raise RuntimeError(f"HTTP {e.code} {e.reason} → {body[:300]}") from None
 
 
+def firebase_anon_token():
+    """Inicia sesión anónima en Firebase Auth y devuelve un idToken.
+    Las reglas de la base ahora exigen autenticación (auth != null), así que
+    necesitamos un token para poder leer y escribir en /results."""
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={FIREBASE_API_KEY}"
+    try:
+        resp = http_json(url, method="POST", data={"returnSecureToken": True})
+        return resp.get("idToken")
+    except RuntimeError as e:
+        print(f"❌ No se pudo autenticar con Firebase: {e}")
+        return None
+
+
 def traducir(nombre_api):
     return TEAM_MAP.get(norm(nombre_api))
 
@@ -182,7 +197,12 @@ def main():
     for m in api_matches:
         print(f"  · {m['homeTeam']['name']} vs {m['awayTeam']['name']} — {m['score']['fullTime']}")
 
-    actuales = http_json(f"{FIREBASE_URL}/results.json") or {}
+    token = firebase_anon_token()
+    auth_q = f"?auth={token}" if token else ""
+    if not token:
+        print("⚠️  Sin token de Firebase: si las reglas exigen auth, las operaciones fallarán.")
+
+    actuales = http_json(f"{FIREBASE_URL}/results.json{auth_q}") or {}
     print(f"Firebase: {len(actuales)} resultados ya cargados")
 
     nuevos = procesar(api_matches, actuales)
@@ -199,7 +219,7 @@ def main():
         print("DRY_RUN activo: no se escribió nada en Firebase.")
     else:
         try:
-            http_json(f"{FIREBASE_URL}/results.json", method="PATCH", data=nuevos)
+            http_json(f"{FIREBASE_URL}/results.json{auth_q}", method="PATCH", data=nuevos)
             print(f"✅ Escritos {len(nuevos)} resultados nuevos en Firebase.")
         except RuntimeError as e:
             print(f"❌ ERROR al escribir en Firebase: {e}")
