@@ -24,13 +24,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Backup de la base completa
-        run: curl -s "https://prodemu-default-rtdb.firebaseio.com/.json" -o backup.json
+        run: |
+          # La base ahora exige login: pedimos un token anónimo (la API key es pública).
+          TOKEN=$(curl -s "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyAk9rmCeKgYIMv7Fngul6RPv7r09-OE0YA" \
+            -H "Content-Type: application/json" -d '{"returnSecureToken":true}' | jq -r .idToken)
+          curl -s "https://prodemu-default-rtdb.firebaseio.com/.json?auth=$TOKEN" -o backup.json
 
-      - name: Guardar backup (se conserva 30 días)
+      - name: Guardar backup (se conserva 2 días)
         uses: actions/upload-artifact@v4
         with:
           name: backup-${{ github.run_id }}
           path: backup.json
+          retention-days: 2
 
       - name: Cargar resultados en Firebase
         env:
