@@ -5,9 +5,11 @@ name: Actualizar resultados PRODEMU
 
 on:
   schedule:
-    # Cada 30 minutos durante el Mundial (jun-jul 2026, hora UTC)
-    - cron: "*/30 * 11-30 6 *"
-    - cron: "*/30 * 1-19 7 *"
+    # Cada 10 minutos durante el Mundial (jun-jul 2026, hora UTC).
+    # GitHub suele saltear corridas programadas; pedir más seguido hace que
+    # igual caiga alguna cerca del final de cada partido.
+    - cron: "*/10 * 11-30 6 *"
+    - cron: "*/10 * 1-19 7 *"
   workflow_dispatch:
     inputs:
       dry_run:
