@@ -2,8 +2,8 @@ name: Actualizar resultados PRODEMU
 
 on:
   schedule:
-    - cron: "*/15 * 11-30 6 *"
-    - cron: "*/15 * 1-19 7 *"
+    - cron: "*/10 * 11-30 6 *"
+    - cron: "*/10 * 1-19 7 *"
   workflow_dispatch:
     inputs:
       dry_run:
