@@ -67,6 +67,7 @@ TEAM_MAP_RAW = {
     "iran": "Irán", "ir iran": "Irán", "new zealand": "Nueva Zelanda",
     # Grupo H
     "spain": "España", "cape verde": "Cabo Verde", "cabo verde": "Cabo Verde",
+    "cape verde islands": "Cabo Verde",
     "saudi arabia": "Arabia Saudita", "uruguay": "Uruguay",
     # Grupo I
     "france": "Francia", "senegal": "Senegal",
