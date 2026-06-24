@@ -321,6 +321,9 @@
     .pm-sheet .pm-grp-header td{position:sticky;left:0;background:#f3f4f6}
     .pm-total td{background:#fff7e6!important;font-weight:800;border-top:2px solid var(--pri);border-bottom:2px solid var(--pri);font-size:.82rem}
     .pm-total td:first-child{color:var(--pri)}
+    .pm-sheet{table-layout:fixed}
+    .pm-sheet th,.pm-sheet td{overflow:hidden;text-overflow:ellipsis}
+    .pm-sheet td:first-child{white-space:normal;line-height:1.2}
 
     /* ── Grids ── */
     .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -1529,11 +1532,12 @@ function viewBracket(){
 function viewAll(){
   const players=Object.entries(allUsers).filter(([,u])=>!u.isAdmin);
   if(players.length===0)return`<div class="card"><p class="tc muted" style="padding:24px">Sin participantes.</p></div>`;
-  // Ordenados por puntos (la planilla sirve también para verificar el ranking)
-  const order=players.map(([uid,u])=>({uid,name:u.displayName||u.username||uid,sc:userScore(uid)}))
-    .sort((a,b)=>b.sc.t-a.sc.t||a.name.localeCompare(b.name));
+  // Orden por fecha de entrega del pronóstico (igual que la hoja de Admin); fallback: fecha de alta
+  const order=players.map(([uid,u])=>({uid,name:u.displayName||u.username||uid,sc:userScore(uid),entrega:(u.predSubmittedAt||u.createdAt||0)}))
+    .sort((a,b)=>a.entrega-b.entrega||a.name.localeCompare(b.name));
   const nPlayed=PARTIDOS.filter(m=>allResults[m.id]).length;
   const cols=order.length+2;
+  const colg=`<colgroup><col style="width:150px"><col style="width:58px">${order.map(()=>'<col style="width:66px">').join('')}</colgroup>`;
 
   const head=`<tr><th style="text-align:left">Partido</th><th>Result.</th>${order.map(p=>`<th title="${p.name}">${p.name.split(' ')[0]}</th>`).join('')}</tr>`;
   const totals=`<tr class="pm-total"><td style="text-align:left">TOTAL · ${nPlayed}/72 jugados</td><td class="tc">pts</td>${order.map(p=>`<td class="tc">${p.sc.t}</td>`).join('')}</tr>`;
@@ -1546,7 +1550,7 @@ function viewAll(){
       const res=allResults[m.id];
       const resHtml=res?`<b>${res.home}–${res.away}</b>`:'<span class="muted">–</span>';
       return`<tr>
-        <td style="white-space:nowrap">${m.home}&nbsp;vs&nbsp;${m.away}</td>
+        <td>${m.home} vs ${m.away}</td>
         <td class="tc">${resHtml}</td>
         ${order.map(p=>{
           const pr=(allPreds[p.uid]||{})[m.id];
@@ -1567,7 +1571,7 @@ function viewAll(){
     </div>
     <div class="card" style="padding:10px">
       <div style="overflow:auto;max-height:78vh">
-        <table class="pm pm-sheet">
+        <table class="pm pm-sheet">${colg}
           <thead>${head}</thead>
           <tbody>${body}</tbody>
         </table>
@@ -2109,7 +2113,8 @@ async function saveResults(){
 function viewAdmin(){
   // Incluir panel de Fase 2
   const f2panel=viewF2AdminPanel();
-  const players=Object.entries(allUsers).filter(([,u])=>!u.isAdmin);
+  const players=Object.entries(allUsers).filter(([,u])=>!u.isAdmin)
+    .sort((a,b)=>((a[1].predSubmittedAt||a[1].createdAt||0)-(b[1].predSubmittedAt||b[1].createdAt||0))||(a[1].displayName||a[1].username||'').localeCompare(b[1].displayName||b[1].username||''));
   const locked=appCfg.locked;
 
   return`
