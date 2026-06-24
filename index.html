@@ -224,6 +224,41 @@
     .f2-btn.f2-real{background:#f0fdf4;color:#15803d;font-weight:800}
     .f2-admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
     @media(max-width:600px){.f2-admin-grid{grid-template-columns:1fr}}
+
+    /* ── Fase 2 · Cuadro visual (llave eliminatoria) ── */
+    .cz-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding:4px 2px 12px}
+    .cz{display:flex;align-items:flex-start;width:max-content;--ln:#cdb978}
+    .cz-col{display:flex;flex-direction:column;margin-right:30px;flex:0 0 auto}
+    .cz-col:last-child{margin-right:0}
+    .cz-h{height:34px;display:flex;align-items:center;justify-content:center;gap:6px;
+      font-size:.72rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--pri),var(--pri2));
+      border-radius:8px;padding:0 8px;white-space:nowrap;letter-spacing:.3px;margin-bottom:4px}
+    .cz-pts{background:var(--gold);color:#fff;font-size:.6rem;font-weight:900;padding:1px 6px;border-radius:10px}
+    .cz-cnt{font-size:.62rem;font-weight:700;color:rgba(255,255,255,.82)}
+    .cz-slot{position:relative;display:flex;align-items:center;justify-content:center}
+    .cz-cell{width:150px;border:2px solid var(--lgray);border-radius:8px;overflow:hidden;
+      background:#fff;position:relative;z-index:1;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .cz-team{display:block;width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--lgray);
+      background:#fff;color:var(--text);font-size:.76rem;font-weight:600;text-align:left;height:26px;line-height:26px;padding:0 9px;
+      cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .12s}
+    .cz-team:last-child{border-bottom:none}
+    .cz-team:hover:not(:disabled):not(.sel):not(.win):not(.loss):not(.real){background:#eff6ff}
+    .cz-team:disabled{cursor:default}
+    .cz-team.sel{background:var(--pri);color:#fff}
+    .cz-team.win{background:var(--green);color:#fff}
+    .cz-team.loss{background:#fee2e2;color:#dc2626;text-decoration:line-through}
+    .cz-team.real{background:#f0fdf4;color:#15803d;font-weight:800}
+    .cz-team.empty{color:var(--gray);font-style:italic;cursor:default;background:#fafafa}
+    .cz-conn{position:absolute;right:100%;width:30px;top:50%;transform:translateY(-50%);border-right:2px solid var(--ln)}
+    .cz-conn::before,.cz-conn::after{content:'';position:absolute;right:0;width:30px;height:2px;background:var(--ln)}
+    .cz-conn::before{top:0}.cz-conn::after{bottom:0}
+    .cz-conn1{position:absolute;right:100%;width:30px;height:2px;top:50%;background:var(--ln)}
+    .cz-champ{width:150px;padding:14px 9px;border:2px solid var(--gold);border-radius:8px;text-align:center;
+      font-size:.85rem;font-weight:800;color:var(--gray);background:#fff;position:relative;z-index:1}
+    .cz-champ.on{background:linear-gradient(135deg,#fff8e1,#fff);color:#7a5c00}
+    .cz-champ.ok{background:var(--green);color:#fff;border-color:var(--green)}
+    .cz-champ.bad{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+    .cz-hint{font-size:.72rem;color:var(--gray);margin-bottom:8px;display:flex;align-items:center;gap:5px}
     /* Small player strip inside app */
     .player-strip{background:linear-gradient(90deg,#0a1628,#1a2c5b,#0a1628);
       display:flex;align-items:center;gap:0;overflow:hidden;height:64px;position:relative}
@@ -278,6 +313,14 @@
     .pm td{padding:6px 10px;border-bottom:1px solid var(--lgray);font-size:.8rem}
     .pm tr:hover td{background:#f9fafb}
     .pm-grp-header td{background:#f3f4f6;font-weight:700;color:var(--pri);font-size:.8rem}
+    /* Planilla única (una sola hoja) con 1ª columna y encabezado fijos */
+    .pm-sheet thead th{z-index:3}
+    .pm-sheet td:first-child,.pm-sheet th:first-child{position:sticky;left:0}
+    .pm-sheet tbody td:first-child{background:#fff;z-index:2;box-shadow:1px 0 0 var(--lgray)}
+    .pm-sheet thead th:first-child{z-index:4}
+    .pm-sheet .pm-grp-header td{position:sticky;left:0;background:#f3f4f6}
+    .pm-total td{background:#fff7e6!important;font-weight:800;border-top:2px solid var(--pri);border-bottom:2px solid var(--pri);font-size:.82rem}
+    .pm-total td:first-child{color:var(--pri)}
 
     /* ── Grids ── */
     .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -466,6 +509,19 @@ const R32=[
   {id:'r16',home:'1K',away:'3-8',label:'16vo 16'},  // M87: 1°K vs mejor 3° (D/E/I/J/L)
 ];
 
+// Slots de 16avos que enfrentan a un 3° → (ganador de grupo, grupos elegibles del 3°)
+// Fuente: Reglamento oficial FIFA World Cup 2026 (Anexo C). Un ganador NUNCA juega contra un 3° de su mismo grupo.
+const F2_THIRD_SLOTS=[
+  {r32:'r1', win:'E', elig:['A','B','C','D','F']},
+  {r32:'r2', win:'I', elig:['C','D','F','G','H']},
+  {r32:'r7', win:'D', elig:['B','E','F','I','J']},
+  {r32:'r8', win:'G', elig:['A','E','H','I','J']},
+  {r32:'r11',win:'A', elig:['C','E','F','H','I']},
+  {r32:'r12',win:'L', elig:['E','H','I','J','K']},
+  {r32:'r15',win:'B', elig:['E','F','G','I','J']},
+  {r32:'r16',win:'K', elig:['D','E','I','J','L']},
+];
+
 
 // =============================================================================
 //  FASE 2 – CONSTANTES DE BRACKET
@@ -480,6 +536,8 @@ const BRACKET_FEED={
 const BRACKET_PTS={r1:3,r2:6,r3:6,r4:8,r5:12};
 const BRACKET_NAMES={r1:'16avos de Final',r2:'8avos de Final',r3:'Cuartos de Final',r4:'Semifinales',r5:'⭐ Final'};
 const BRACKET_COUNTS={r1:16,r2:8,r3:4,r4:2,r5:1};
+const F2_SHORT={r1:'16avos',r2:'8avos',r3:'Cuartos',r4:'Semis',r5:'Final'}; // títulos cortos para el cuadro
+const F2_BASE=60; // alto base (px) de cada slot del cuadro: 2 equipos de 26px + bordes entran sin solaparse
 
 // =============================================================================
 //  ③  ESTADO GLOBAL
@@ -487,9 +545,10 @@ const BRACKET_COUNTS={r1:16,r2:8,r3:4,r4:2,r5:1};
 let db=null,fbOk=false,currentUser=null;
 let allUsers={},allPreds={},allResults={},appCfg={locked:false};
 let allChat={};
-let f2bracket={},f2preds={},f2results={},f2cfg={open:false,locked:false};
+let f2bracket={},f2bracketStored={},f2preds={},f2results={},f2cfg={open:false,locked:false};
 let f2qualifiers=[]; // UIDs de los 32 clasificados a Fase 2
 let f2picks={},f2picksLoaded=false;
+let f2allSel=null;
 let currentView='pred';
 
 // =============================================================================
@@ -557,6 +616,7 @@ function dbDel(path){
 function loadLocal(){
   const raw=JSON.parse(localStorage.getItem('pm26')||'{}');
   allUsers=raw.users||{};allPreds=raw.preds||{};allResults=raw.results||{};appCfg=raw.config||{locked:false};allChat=raw.chat||{};
+  f2bracketStored=(raw.f2&&raw.f2.bracket)||{};recomputeF2Bracket();
 }
 
 // =============================================================================
@@ -586,22 +646,60 @@ function calcGrupoTable(groupId, preds){
   return sortearGrupo(Object.values(st),ms,preds);
 }
 
-/** Ordenamiento con criterios de desempate FIFA */
-function sortearGrupo(teams,ms,preds){
-  return[...teams].sort((a,b)=>{
-    if(b.Pts!==a.Pts)return b.Pts-a.Pts;
-    if(b.GD!==a.GD)return b.GD-a.GD;
-    if(b.GF!==a.GF)return b.GF-a.GF;
-    // Desempate directo (head-to-head)
-    const h=h2h(a.name,b.name,ms,preds);
-    if(h){
-      if(h[b.name].Pts!==h[a.name].Pts)return h[b.name].Pts-h[a.name].Pts;
-      if(h[b.name].GD!==h[a.name].GD)return h[b.name].GD-h[a.name].GD;
-      if(h[b.name].GF!==h[a.name].GF)return h[b.name].GF-h[a.name].GF;
+/** Ordenamiento con criterios de desempate oficiales FIFA 2026:
+ *  1) Puntos → 2) MANO A MANO entre los empatados (pts → dif. gol → goles)
+ *  → 3) Dif. de gol general → 4) Goles a favor general → 5) conducta/ranking FIFA (no disponibles).
+ *  Maneja empates de 2, 3 o 4 equipos con una mini-tabla recursiva (estilo FIFA/UEFA). */
+function overallCmpEq(a,b){
+  if(b.GD!==a.GD)return b.GD-a.GD;
+  if(b.GF!==a.GF)return b.GF-a.GF;
+  return a.name.localeCompare(b.name);
+}
+function resolveTieGroup(block,ms,preds){
+  if(block.length<2)return block;
+  const names=new Set(block.map(t=>t.name));
+  const mini={};block.forEach(t=>mini[t.name]={Pts:0,GF:0,GA:0,GD:0});
+  let complete=true;
+  for(const m of ms){
+    if(names.has(m.home)&&names.has(m.away)){
+      const p=preds[m.id];
+      if(!p||p.home==null||p.away==null||p.home===''||p.away===''){complete=false;continue;}
+      const gh=+p.home,ga=+p.away;
+      mini[m.home].GF+=gh;mini[m.home].GA+=ga;
+      mini[m.away].GF+=ga;mini[m.away].GA+=gh;
+      if(gh>ga)mini[m.home].Pts+=3;else if(gh<ga)mini[m.away].Pts+=3;else{mini[m.home].Pts++;mini[m.away].Pts++;}
     }
-    if(b.W!==a.W)return b.W-a.W;
-    return a.name.localeCompare(b.name);
+  }
+  Object.values(mini).forEach(x=>x.GD=x.GF-x.GA);
+  if(!complete)return[...block].sort(overallCmpEq); // mano a mano aún incompleto → criterio general
+  const sorted=[...block].sort((a,b)=>{
+    if(mini[b.name].Pts!==mini[a.name].Pts)return mini[b.name].Pts-mini[a.name].Pts;
+    if(mini[b.name].GD!==mini[a.name].GD)return mini[b.name].GD-mini[a.name].GD;
+    if(mini[b.name].GF!==mini[a.name].GF)return mini[b.name].GF-mini[a.name].GF;
+    return 0;
   });
+  const out=[];let i=0;
+  while(i<sorted.length){
+    let j=i;
+    while(j<sorted.length&&mini[sorted[j].name].Pts===mini[sorted[i].name].Pts&&mini[sorted[j].name].GD===mini[sorted[i].name].GD&&mini[sorted[j].name].GF===mini[sorted[i].name].GF)j++;
+    const sub=sorted.slice(i,j);
+    if(sub.length>1&&sub.length<block.length)out.push(...resolveTieGroup(sub,ms,preds)); // re-aplicar mano a mano al subgrupo
+    else if(sub.length>1)out.push(...[...sub].sort(overallCmpEq)); // siguen iguales → general
+    else out.push(sub[0]);
+    i=j;
+  }
+  return out;
+}
+function sortearGrupo(teams,ms,preds){
+  const arr=[...teams].sort((a,b)=>b.Pts-a.Pts);
+  const result=[];let i=0;
+  while(i<arr.length){
+    let j=i;while(j<arr.length&&arr[j].Pts===arr[i].Pts)j++;
+    const block=arr.slice(i,j);
+    result.push(...(block.length>1?resolveTieGroup(block,ms,preds):block));
+    i=j;
+  }
+  return result;
 }
 
 function h2h(tA,tB,ms,preds){
@@ -632,10 +730,10 @@ function mejoresTerceros(tables){
     return eq?{...eq,groupId:t.id,groupName:t.nombre}:null;
   }).filter(Boolean);
   thirds.sort((a,b)=>{
-    if(b.Pts!==a.Pts)return b.Pts-a.Pts;
-    if(b.GD!==a.GD)return b.GD-a.GD;
-    if(b.GF!==a.GF)return b.GF-a.GF;
-    if(b.W!==a.W)return b.W-a.W;
+    if(b.Pts!==a.Pts)return b.Pts-a.Pts;   // 1) Puntos
+    if(b.GD!==a.GD)return b.GD-a.GD;        // 2) Diferencia de gol (todos los partidos)
+    if(b.GF!==a.GF)return b.GF-a.GF;        // 3) Goles a favor (todos los partidos)
+    // 4) Conducta (tarjetas) y 5) Ranking FIFA: no se computan en el pool → el admin desempata a mano si hace falta
     return a.name.localeCompare(b.name);
   });
   return thirds;
@@ -651,6 +749,83 @@ function resolveSlot(slot,tables,thirds){
   const gid=slot[1];
   const tbl=tables.find(t=>t.id===gid);
   return(tbl&&tbl.tabla[pos])?tbl.tabla[pos].name:'?';
+}
+
+/* Asigna los 8 grupos de los mejores terceros a sus slots respetando los grupos
+   habilitados por FIFA (matching con heurística MRV). Devuelve {r32:grupo} o null. */
+function asignarTercerosASlots(qualGroups){
+  const rank={};qualGroups.forEach((g,i)=>rank[g]=i);
+  const assign={},used={};
+  const avail=r32=>{const s=F2_THIRD_SLOTS.find(x=>x.r32===r32);
+    return s.elig.filter(g=>rank[g]!=null&&!used[g]).sort((a,b)=>rank[a]-rank[b]);};
+  function solve(slots){
+    if(!slots.length)return true;
+    let best=slots[0],bo=avail(best);
+    for(const r of slots){const o=avail(r);if(o.length<bo.length){best=r;bo=o;}}
+    if(!bo.length)return false;
+    const rest=slots.filter(r=>r!==best);
+    for(const g of bo){used[g]=1;assign[best]=g;if(solve(rest))return true;delete used[g];delete assign[best];}
+    return false;
+  }
+  return solve(F2_THIRD_SLOTS.map(s=>s.r32))?assign:null;
+}
+
+/* Resuelve los 16 cruces de 16avos para unas tablas/terceros dados (formato oficial FIFA 2026).
+   Ganadores y segundos: exactos. Terceros: 8 mejores asignados a su slot habilitado.
+   Lo usan tanto el autocompletado de Fase 2 como la vista "Clasificados" (misma asignación). */
+function construirR32(tables,thirds){
+  const qualGroups=thirds.slice(0,8).map(t=>t.groupId);
+  const thirdAssign=asignarTercerosASlots(qualGroups);
+  const nameOf=(gid,pos)=>{const t=tables.find(x=>x.id===gid);return(t&&t.tabla[pos])?t.tabla[pos].name:'';};
+  const resolve=(slot,r32id)=>{
+    if(slot[0]==='3'){const gid=thirdAssign?thirdAssign[r32id]:null;return gid?nameOf(gid,2):'';}
+    return nameOf(slot[1],+slot[0]-1);
+  };
+  const cruces=R32.map(m=>({...m,homeTeam:resolve(m.home,m.id),awayTeam:resolve(m.away,m.id)}));
+  return{cruces,thirdAssign,qualGroups};
+}
+function calcularR32Auto(){
+  const tables=allTables(allResults);
+  const thirds=mejoresTerceros(tables);
+  const{cruces,thirdAssign,qualGroups}=construirR32(tables,thirds);
+  const bracket={};
+  cruces.forEach((m,i)=>{bracket['r1m'+(i+1)]={home:m.homeTeam,away:m.awayTeam};});
+  return{bracket,thirds,qualGroups,thirdAssign,tables};
+}
+
+/* Cuadro de 16avos EFECTIVO. Si el admin cargó un override manual (f2bracketStored), se usa eso;
+   si no, se DERIVA solo cuando los 72 partidos de grupo están cargados → se carga automáticamente. */
+function todosGruposCompletos(){
+  return PARTIDOS.every(m=>{const r=allResults[m.id];return r&&r.home!=null&&r.home!==''&&r.away!=null&&r.away!=='';});
+}
+function recomputeF2Bracket(){
+  if(f2bracketStored&&Object.keys(f2bracketStored).length){f2bracket=f2bracketStored;return;}
+  f2bracket=todosGruposCompletos()?calcularR32Auto().bracket:{};
+}
+
+/* Dibuja la llave (draw) completa: 16avos cargados + rondas siguientes "Por definir".
+   crosses = array de 16 {homeTeam,awayTeam} en orden de bracket. Reusa el visual del cuadro. */
+function drawCell(name){
+  if(!name)return `<button class="cz-team empty" disabled>Por definir</button>`;
+  const safe=String(name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return `<button class="cz-team" disabled style="cursor:default" title="${safe}">${safe}</button>`;
+}
+function buildDrawHTML(crosses){
+  let html='<div class="cz-wrap"><div class="cz">';
+  ['r1','r2','r3','r4','r5'].forEach((round,ri)=>{
+    const slotH=F2_BASE*Math.pow(2,ri),count=BRACKET_COUNTS[round];
+    let col=`<div class="cz-col"><div class="cz-h">${F2_SHORT[round]}</div>`;
+    for(let i=1;i<=count;i++){
+      let tA=null,tB=null;
+      if(ri===0){const c=crosses[i-1]||{};tA=c.homeTeam||null;tB=c.awayTeam||null;}
+      col+=`<div class="cz-slot" style="height:${slotH}px">`;
+      if(ri>0)col+=`<div class="cz-conn" style="height:${slotH/2}px"></div>`;
+      col+=`<div class="cz-cell">${drawCell(tA)}${drawCell(tB)}</div></div>`;
+    }
+    html+=col+'</div>';
+  });
+  html+=`<div class="cz-col"><div class="cz-h">🏆 Campeón</div><div class="cz-slot" style="height:${F2_BASE*16}px"><div class="cz-conn1"></div><div class="cz-champ">—</div></div></div>`;
+  return html+'</div></div>';
 }
 
 // =============================================================================
@@ -722,9 +897,9 @@ window.addEventListener('load',()=>{
 function attachDbListeners(){
   db.ref('users').on('value',s=>{allUsers=s.val()||{};if(currentUser)renderApp();});
   db.ref('preds').on('value',s=>{allPreds=s.val()||{};if(currentUser)renderApp();});
-  db.ref('results').on('value',s=>{allResults=s.val()||{};if(currentUser)renderApp();});
+  db.ref('results').on('value',s=>{allResults=s.val()||{};recomputeF2Bracket();if(currentUser)renderApp();});
   db.ref('config').on('value',s=>{appCfg=s.val()||{locked:false};if(currentUser)renderApp();});
-  db.ref('f2/bracket').on('value',s=>{f2bracket=s.val()||{};if(currentUser)renderApp();});
+  db.ref('f2/bracket').on('value',s=>{f2bracketStored=s.val()||{};recomputeF2Bracket();if(currentUser)renderApp();});
   db.ref('f2/preds').on('value',s=>{f2preds=s.val()||{};if(currentUser)renderApp();});
   db.ref('f2/results').on('value',s=>{f2results=s.val()||{};if(currentUser)renderApp();});
   db.ref('f2/cfg').on('value',s=>{f2cfg=s.val()||{open:false,locked:false};if(currentUser)renderApp();});
@@ -845,13 +1020,16 @@ function renderApp(){
   const locked=appCfg.locked;
   const chip=locked?`<span class="chip chip-red"><span class="chip-dot"></span>Pronósticos cerrados</span>`
                    :`<span class="chip chip-grn"><span class="chip-dot"></span>Pronósticos abiertos</span>`;
+  const hasF2=Object.keys(f2bracket).length>0;
   const tabs=[
-    ['pred','📝 Pronósticos'],
+    ['pred','📝 Pronósticos F1'],
+    ['bracket','🏅 Clasificados F1'],
+    ...(locked||isAdmin?[['all','👁️ Ver todos F1']]:[]),
+    ...(isAdmin||(f2cfg.open&&f2qualifiers.includes(currentUser.id)&&hasF2)?[['f2','📝 Pronósticos F2']]:[]),
+    ...(hasF2&&(f2cfg.locked||isAdmin)?[['f2plan','👁️ Ver todos F2']]:[]),
+    ...(hasF2?[['f2clasif','🏅 Clasificados F2']]:[]),
     ['ranking','🏆 Ranking'],
-    ['bracket','🏅 Clasificados'],
     ['chat','💬 Chat'],
-    ...(locked||isAdmin?[['all','👁️ Ver todos']]:[]),
-    ...((isAdmin||(f2cfg.open&&f2qualifiers.includes(currentUser.id)))&&Object.keys(f2bracket).length?[['f2','🥊 Fase 2']]:[]),
     ...(isAdmin?[['results','⚽ Resultados'],['admin','⚙️ Admin']]:[]),
   ];
   const nav=tabs.map(([v,l])=>`<button class="nav-btn ${currentView===v?'active':''}" onclick="sw('${v}')">${l}</button>`).join('');
@@ -862,8 +1040,11 @@ function renderApp(){
   else if(currentView==='chat')content=viewChat();
   else if(currentView==='all')content=viewAll();
   else if(currentView==='f2')content=viewF2Pred();
+  else if(currentView==='f2plan')content=viewF2Planilla();
+  else if(currentView==='f2clasif')content=viewF2Clasif();
   else if(currentView==='results'&&isAdmin)content=viewResults();
   else if(currentView==='admin'&&isAdmin)content=viewAdmin();
+  else content=viewPred();
   // Strip de jugadores argentinos (se muestra solo si hay espacio)
   const players = [
     {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Lautaro_Mart%C3%ADnez_-_Argentina_vs_Australia_%28cropped%29.jpg/120px-Lautaro_Mart%C3%ADnez_-_Argentina_vs_Australia_%28cropped%29.jpg', name:'Lautaro'},
@@ -1262,12 +1443,9 @@ function viewBracket(){
   const thirds=mejoresTerceros(tables);
   const topThirds=thirds.slice(0,8);
 
-  // Resolver los 16 cruces
-  const r32=R32.map(m=>({
-    ...m,
-    homeTeam:resolveSlot(m.home,tables,thirds),
-    awayTeam:resolveSlot(m.away,tables,thirds),
-  }));
+  // Resolver los 16 cruces con la asignación oficial de terceros (misma que el autocompletado de Fase 2)
+  const {cruces:r32}=construirR32(tables,thirds);
+  const ps=s=>s[0]==='3'?'Mejor 3°':(s[0]+'°'+s[1]);
 
   let html=`
     <div class="card">
@@ -1308,7 +1486,7 @@ function viewBracket(){
     <!-- Ranking de los terceros -->
     <div class="card">
       <div class="card-title">🏳️ Ranking de 3° puestos – clasifican los 8 mejores</div>
-      <p class="sm muted mb2">Desempate: Puntos → Diferencia de goles → Goles a favor → Victorias</p>
+      <p class="sm muted mb2">Desempate: Puntos → Diferencia de goles → Goles a favor → conducta (tarjetas) → ranking FIFA</p>
       <div style="overflow-x:auto">
         <table class="rt">
           <thead><tr><th>#</th><th>Grupo</th><th>Equipo</th>
@@ -1336,17 +1514,10 @@ function viewBracket(){
     <div class="card">
       <div class="card-title">⚔️ 16avos de Final – Cruces</div>
       <div class="alert alert-info mb3 sm">
-        ⚠️ Los cruces siguen el formato predefinido FIFA 2026 (verificar con fixture oficial).
-        Los 8 mejores 3° juegan entre sí (M13-M16).
+        Cruces según el formato oficial FIFA 2026: cada 3° enfrenta a un ganador de grupo respetando los grupos habilitados (sin revancha del mismo grupo). Misma asignación que el autocompletado de Fase 2.
       </div>
-      <div class="bracket-grid">
-        ${r32.map(m=>`
-          <div class="bracket-match">
-            <div class="bracket-label">${m.label} &nbsp;<span style="color:var(--lgray);font-size:.65rem">(${m.home} vs ${m.away})</span></div>
-            <div class="bracket-match-home">🟢 ${m.homeTeam}</div>
-            <div class="bracket-match-away">🔵 ${m.awayTeam}</div>
-          </div>`).join('')}
-      </div>
+      <div class="cz-hint">👉 Deslizá para ver toda la llave · las rondas siguientes se definen en la Fase 2</div>
+      ${buildDrawHTML(r32)}
     </div>`;
 
   return html;
@@ -1358,43 +1529,50 @@ function viewBracket(){
 function viewAll(){
   const players=Object.entries(allUsers).filter(([,u])=>!u.isAdmin);
   if(players.length===0)return`<div class="card"><p class="tc muted" style="padding:24px">Sin participantes.</p></div>`;
+  // Ordenados por puntos (la planilla sirve también para verificar el ranking)
+  const order=players.map(([uid,u])=>({uid,name:u.displayName||u.username||uid,sc:userScore(uid)}))
+    .sort((a,b)=>b.sc.t-a.sc.t||a.name.localeCompare(b.name));
+  const nPlayed=PARTIDOS.filter(m=>allResults[m.id]).length;
+  const cols=order.length+2;
 
-  let html=`
-    <div class="card">
-      <div class="card-title">👁️ Pronósticos de todos los participantes</div>
-      <p class="sm muted">Podés ver cómo pronosticó cada jugador. Los puntos obtenidos aparecen cuando el partido tiene resultado oficial.</p>
-    </div>`;
+  const head=`<tr><th style="text-align:left">Partido</th><th>Result.</th>${order.map(p=>`<th title="${p.name}">${p.name.split(' ')[0]}</th>`).join('')}</tr>`;
+  const totals=`<tr class="pm-total"><td style="text-align:left">TOTAL · ${nPlayed}/72 jugados</td><td class="tc">pts</td>${order.map(p=>`<td class="tc">${p.sc.t}</td>`).join('')}</tr>`;
 
+  let body=totals; // total arriba, siempre visible
   for(const g of GRUPOS){
     const ms=PARTIDOS.filter(m=>m.grupo===g.id);
-    html+=`<div class="card"><div class="card-title">🏟️ ${g.nombre}</div>
-      <div style="overflow-x:auto">
-      <table class="pm">
-        <thead><tr>
-          <th>Partido</th><th>Resultado</th>
-          ${players.map(([,u])=>`<th>${(u.displayName||u.username).split(' ')[0]}</th>`).join('')}
-        </tr></thead>
-        <tbody>
-          ${ms.map(m=>{
-            const res=allResults[m.id];
-            const resHtml=res?`<b>${res.home}–${res.away}</b>`:`<span class="muted">–</span>`;
-            return`<tr>
-              <td>${m.home}&nbsp;vs&nbsp;${m.away}</td>
-              <td class="tc">${resHtml}</td>
-              ${players.map(([uid])=>{
-                const p=(allPreds[uid]||{})[m.id];
-                if(!p||p.home==null)return`<td class="tc muted">–</td>`;
-                const pts=calcPts(p,res);
-                let bg='';
-                if(pts!==null)bg=pts.t===4?'background:#dcfce7':pts.t===3?'background:#dbeafe':pts.t===1?'background:#fef9c3':pts.t===0?'background:#fef2f2':'';
-                return`<td class="tc" style="${bg}"><b>${p.home}–${p.away}</b>${pts!==null?`<br><span class="xs muted">${pts.t>0?'+'+pts.t:'0'}pts</span>`:''}</td>`;
-              }).join('')}
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table></div></div>`;
+    body+=`<tr class="pm-grp-header"><td colspan="${cols}">${g.nombre}</td></tr>`;
+    body+=ms.map(m=>{
+      const res=allResults[m.id];
+      const resHtml=res?`<b>${res.home}–${res.away}</b>`:'<span class="muted">–</span>';
+      return`<tr>
+        <td style="white-space:nowrap">${m.home}&nbsp;vs&nbsp;${m.away}</td>
+        <td class="tc">${resHtml}</td>
+        ${order.map(p=>{
+          const pr=(allPreds[p.uid]||{})[m.id];
+          if(!pr||pr.home==null)return`<td class="tc muted">–</td>`;
+          const pts=calcPts(pr,res);
+          let bg='';
+          if(pts!==null)bg=pts.t===4?'background:#dcfce7':pts.t===3?'background:#dbeafe':pts.t===1?'background:#fef9c3':'background:#fef2f2';
+          return`<td class="tc" style="${bg}">${pr.home}–${pr.away}${pts!==null?`<br><span class="xs muted">${pts.t>0?'+'+pts.t:'0'}</span>`:''}</td>`;
+        }).join('')}
+      </tr>`;
+    }).join('');
   }
-  return html;
+
+  return`
+    <div class="card">
+      <div class="card-title">👁️ Ver todos F1 — pronósticos de los participantes</div>
+      <p class="sm muted">Todos los partidos, el resultado oficial, el pronóstico de cada jugador y los puntos que saca. Colores: <b style="background:#dcfce7;padding:0 4px;border-radius:3px">4</b> exacto · <b style="background:#dbeafe;padding:0 4px;border-radius:3px">3</b> resultado · <b style="background:#fef9c3;padding:0 4px;border-radius:3px">1</b> · <b style="background:#fef2f2;padding:0 4px;border-radius:3px">0</b>.</p>
+    </div>
+    <div class="card" style="padding:10px">
+      <div style="overflow:auto;max-height:78vh">
+        <table class="pm pm-sheet">
+          <thead>${head}</thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 
@@ -1422,6 +1600,16 @@ function pickF2(mid,team){
   f2picks[mid]=team;
   (function clear(id){for(const[m,feeds] of Object.entries(BRACKET_FEED))if(feeds.includes(id)){delete f2picks[m];clear(m);}})(mid);
   const el=document.getElementById('f2wrap');if(el)el.innerHTML=f2buildHTML();
+  f2updateStats();
+}
+function f2updateStats(){
+  const total=Object.values(BRACKET_COUNTS).reduce((s,n)=>s+n,0);
+  const done=Object.keys(f2picks).length;
+  const dEl=document.getElementById('f2-done');if(dEl)dEl.textContent=done+'/'+total;
+  const pEl=document.getElementById('f2-pct');if(pEl)pEl.textContent=Math.round(done/total*100)+'%';
+  const wEl=document.getElementById('f2-warn');if(wEl)wEl.style.display=(done<total&&!f2cfg.locked)?'':'none';
+  const oEl=document.getElementById('f2-ok');if(oEl)oEl.style.display=(done===total)?'':'none';
+  const cEl=document.getElementById('f2-champ');if(cEl){const c=f2picks['r5m1'];cEl.textContent=c?('🏆 Tu campeón: '+c):'';}
 }
 async function saveF2Pred(){
   const totalPicks=Object.values(BRACKET_COUNTS).reduce((s,n)=>s+n,0);
@@ -1436,42 +1624,46 @@ async function saveF2Pred(){
   f2preds[uid]=data;
   toast('✅ Bracket completo guardado','ok');
 }
+// Devuelve [equipoA,equipoB] de un cruce: r1 desde el bracket del admin, el resto desde los picks que van pasando
+function f2teamsFor(mid){
+  if(mid.startsWith('r1')){const b=f2bracket[mid]||{};return[b.home||null,b.away||null];}
+  const[a,b]=BRACKET_FEED[mid];
+  return[f2picks[a]||null,f2picks[b]||null];
+}
+function f2teamBtn(mid,name,pick,real,locked){
+  if(!name)return `<button class="cz-team empty" disabled>Por definir</button>`;
+  let cls='cz-team';
+  if(pick===name)cls+= real?(real===name?' win':' loss'):' sel';
+  else if(real===name)cls+=' real';
+  const esc=t=>t.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const safe=name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return `<button class="${cls}" ${locked?'disabled':''} onclick="pickF2('${mid}','${esc(name)}')" title="${safe}">${safe}</button>`;
+}
+// Cuadro visual: columnas conectadas (16avos → Final → Campeón) que se va armando al elegir
 function f2buildHTML(){
-  const picks=f2picks;
   const locked=f2cfg.locked;
-  let html='';
-  for(const round of['r1','r2','r3','r4','r5']){
-    const count=BRACKET_COUNTS[round],pts=BRACKET_PTS[round];
-    let matches='';
+  let html='<div class="cz-wrap"><div class="cz">';
+  ['r1','r2','r3','r4','r5'].forEach((round,ri)=>{
+    const slotH=F2_BASE*Math.pow(2,ri),count=BRACKET_COUNTS[round];
+    const done=Array.from({length:count},(_,i)=>f2picks[round+'m'+(i+1)]).filter(Boolean).length;
+    let col=`<div class="cz-col"><div class="cz-h">${F2_SHORT[round]}<span class="cz-pts">${BRACKET_PTS[round]}p</span><span class="cz-cnt">${done}/${count}</span></div>`;
     for(let i=1;i<=count;i++){
-      const mid=round+'m'+i;
-      const[tA,tB]=f2getTeams(mid,picks);
-      const pick=picks[mid],real=f2results[mid];
-      const isPending=tA===tA.toUpperCase()&&!tA.includes(' ')&&!tA.startsWith('r');
-      function cls(t){
-        if(pick===t){if(real)return real===t?'f2-btn f2-win':'f2-btn f2-loss';return'f2-btn f2-sel';}
-        if(real===t)return'f2-btn f2-real';return'f2-btn';
-      }
-      const dis=(locked||!tA||tA===tA.replace(/[a-z]/g,'').toUpperCase()&&tA.length<5)?'':'' ;
-      const esc=t=>t.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      matches+=`<div class="f2-match">
-        <div class="f2-mnum">M${i}${real?` · <b style="color:var(--green)">${real} ✓</b>`:''}</div>
-        <button class="${cls(tA)}" ${locked?'disabled':''} onclick="pickF2('${mid}','${esc(tA)}')">${tA}</button>
-        <button class="${cls(tB)}" ${locked?'disabled':''} onclick="pickF2('${mid}','${esc(tB)}')">${tB}</button>
-      </div>`;
+      const mid=round+'m'+i,[tA,tB]=f2teamsFor(mid);
+      const pick=f2picks[mid],real=f2results[mid];
+      col+=`<div class="cz-slot" style="height:${slotH}px">`;
+      if(ri>0)col+=`<div class="cz-conn" style="height:${slotH/2}px"></div>`;
+      col+=`<div class="cz-cell">${f2teamBtn(mid,tA,pick,real,locked)}${f2teamBtn(mid,tB,pick,real,locked)}</div></div>`;
     }
-    const done=Array.from({length:count},(_,i)=>picks[round+'m'+(i+1)]).filter(Boolean).length;
-    html+=`<div class="f2-round">
-      <div class="f2-rhead">${BRACKET_NAMES[round]}<span class="f2-pts-badge">${pts} pts</span>
-        <span style="margin-left:auto;font-size:.72rem;opacity:.8">${done}/${count} picks</span>
-      </div>
-      <div class="f2-matches">${matches}</div>
-    </div>`;
-  }
-  return html;
+    html+=col+'</div>';
+  });
+  const champ=f2picks['r5m1'],realChamp=f2results['r5m1'];
+  const champCls=champ?(realChamp?(realChamp===champ?'ok':'bad'):'on'):'';
+  const champTxt=champ?champ.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'¿?';
+  html+=`<div class="cz-col"><div class="cz-h">🏆 Campeón</div><div class="cz-slot" style="height:${F2_BASE*16}px"><div class="cz-conn1"></div><div class="cz-champ ${champCls}">${champTxt}</div></div></div>`;
+  return html+'</div></div>';
 }
 function viewF2Pred(){
-  if(!Object.keys(f2bracket).length)
+  if(!Object.keys(f2bracket).length&&!currentUser.isAdmin)
     return`<div class="card"><div class="alert alert-info tc" style="padding:24px">⏳ La Fase 2 aún no está disponible. El administrador la habilitará cuando finalice la Fase 1.</div></div>`;
   // Verificar clasificación (admin siempre puede ver)
   if(!currentUser.isAdmin&&f2qualifiers.length>0&&!f2qualifiers.includes(currentUser.id))
@@ -1481,22 +1673,179 @@ function viewF2Pred(){
       <span class="muted sm">Solo los 32 mejores de la Fase 1 avanzan al bracket eliminatorio.</span>
     </div></div>`;
   f2initPicks();
+  const noBracket=!Object.keys(f2bracket).length;
   const uid=currentUser.id;
   const myPts=f2calcScore(uid);
   const totalPicks=Object.values(BRACKET_COUNTS).reduce((s,n)=>s+n,0);
   const done=Object.keys(f2picks).length;
   const pct=Math.round(done/totalPicks*100);
+  const champ=f2picks['r5m1'];
   return`
+    <div class="card" style="margin-bottom:12px">
+      <div class="between mb2" style="flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">📝 Pronósticos F2 · Cuadro eliminatorio</div>
+        <span id="f2-champ" class="sm bold" style="color:var(--gold)">${champ?('🏆 Tu campeón: '+champ):''}</span>
+      </div>
+      <p class="sm muted" style="margin:0">Tocá en cada cruce al equipo que creés que pasa: avanza solo a la ronda siguiente y se va armando tu llave hasta la final. Tenés que completar todo el cuadro antes del primer partido de la Fase 2.</p>
+    </div>
+    ${noBracket?'<div class="alert alert-info mb2">👀 <b>Vista de admin.</b> El cuadro se completa <b>solo</b> cuando termine la fase de grupos (los 72 partidos cargados). Si querés, después podés corregir algún cruce en <b>⚙️ Admin → Configurar 16avos</b>.</div>':''}
     <div class="stats-row">
-      <div class="stat-box"><div class="stat-val">${done}/${totalPicks}</div><div class="stat-lbl">Picks cargados</div></div>
-      <div class="stat-box"><div class="stat-val">${pct}%</div><div class="stat-lbl">Completado</div></div>
+      <div class="stat-box"><div class="stat-val" id="f2-done">${done}/${totalPicks}</div><div class="stat-lbl">Picks cargados</div></div>
+      <div class="stat-box"><div class="stat-val" id="f2-pct">${pct}%</div><div class="stat-lbl">Completado</div></div>
       <div class="stat-box"><div class="stat-val">${myPts}</div><div class="stat-lbl">Pts Fase 2</div></div>
     </div>
     ${f2cfg.locked?'<div class="alert alert-warn mb2">🔒 Bracket cerrado — no se puede modificar.</div>':''}
-    ${done<totalPicks&&!f2cfg.locked?`<div class="alert alert-warn mb2">⚠️ Faltan <b>${totalPicks-done}</b> picks. Completá el bracket antes del inicio de la Fase 2.</div>`:''}
-    ${done===totalPicks?'<div class="alert alert-ok mb2">✅ ¡Bracket completo!</div>':''}
-    <div id="f2wrap">${f2buildHTML()}</div>
+    <div id="f2-warn" class="alert alert-warn mb2" style="display:${(done<totalPicks&&!f2cfg.locked)?'':'none'}">⚠️ Te faltan picks. Completá el cuadro hasta el campeón antes del inicio de la Fase 2.</div>
+    <div id="f2-ok" class="alert alert-ok mb2" style="display:${done===totalPicks?'':'none'}">✅ ¡Bracket completo! No te olvides de tocar “Guardar”.</div>
+    <div class="card" style="padding:14px 10px">
+      <div class="cz-hint">👉 Deslizá para ver toda la llave</div>
+      <div id="f2wrap">${f2buildHTML()}</div>
+    </div>
     ${!f2cfg.locked?`<button class="btn btn-pri w100 mt2" onclick="saveF2Pred()">💾 Guardar bracket</button>`:''}`;
+}
+
+// Cuadro de un participante en SOLO LECTURA (para "Brackets F2")
+function f2buildReadonly(picks){
+  picks=picks||{};
+  let html='<div class="cz-wrap"><div class="cz">';
+  ['r1','r2','r3','r4','r5'].forEach((round,ri)=>{
+    const slotH=F2_BASE*Math.pow(2,ri),count=BRACKET_COUNTS[round];
+    let col=`<div class="cz-col"><div class="cz-h">${F2_SHORT[round]}<span class="cz-pts">${BRACKET_PTS[round]}p</span></div>`;
+    for(let i=1;i<=count;i++){
+      const mid=round+'m'+i;let tA,tB;
+      if(mid.startsWith('r1')){const b=f2bracket[mid]||{};tA=b.home||null;tB=b.away||null;}
+      else{const[a,b]=BRACKET_FEED[mid];tA=picks[a]||null;tB=picks[b]||null;}
+      const pick=picks[mid],real=f2results[mid];
+      col+=`<div class="cz-slot" style="height:${slotH}px">`;
+      if(ri>0)col+=`<div class="cz-conn" style="height:${slotH/2}px"></div>`;
+      col+=`<div class="cz-cell">${f2teamBtn(mid,tA,pick,real,true)}${f2teamBtn(mid,tB,pick,real,true)}</div></div>`;
+    }
+    html+=col+'</div>';
+  });
+  const champ=picks['r5m1'],realChamp=f2results['r5m1'];
+  const champCls=champ?(realChamp?(realChamp===champ?'ok':'bad'):'on'):'';
+  const champTxt=champ?champ.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):'—';
+  html+=`<div class="cz-col"><div class="cz-h">🏆 Campeón</div><div class="cz-slot" style="height:${F2_BASE*16}px"><div class="cz-conn1"></div><div class="cz-champ ${champCls}">${champTxt}</div></div></div>`;
+  return html+'</div></div>';
+}
+// Vista: TODOS ven los brackets de Fase 2 de los clasificados (se habilita al cerrar los picks)
+function viewF2All(){
+  if(!Object.keys(f2bracket).length)
+    return`<div class="card"><div class="alert alert-info tc" style="padding:24px">La Fase 2 todavía no está configurada.</div></div>`;
+  if(!f2cfg.locked&&!currentUser.isAdmin)
+    return`<div class="card"><div class="alert alert-info tc" style="padding:24px">🔒 Vas a poder ver los brackets de todos cuando el organizador cierre los picks de la Fase 2.</div></div>`;
+  const base=(f2qualifiers&&f2qualifiers.length)?f2qualifiers:Object.keys(allUsers).filter(u=>!(allUsers[u]||{}).isAdmin);
+  const ids=base.filter(uid=>f2preds[uid]&&Object.keys(f2preds[uid]).length);
+  if(!ids.length)
+    return`<div class="card"><div class="alert alert-warn tc" style="padding:24px">Todavía nadie cargó su bracket de Fase 2.</div></div>`;
+  const list=ids.map(uid=>{const u=allUsers[uid]||{};return{uid,name:u.displayName||u.username||uid,pts:f2calcScore(uid),done:Object.keys(f2preds[uid]).length};})
+    .sort((a,b)=>b.pts-a.pts||a.name.localeCompare(b.name));
+  if(!f2allSel||!ids.includes(f2allSel))f2allSel=list[0].uid;
+  const sel=f2allSel,selRow=list.find(x=>x.uid===sel),champ=(f2preds[sel]||{})['r5m1'];
+  const opts=list.map(p=>`<option value="${p.uid}" ${p.uid===sel?'selected':''}>${p.name} — ${p.pts} pts${p.done<31?' ('+p.done+'/31)':''}</option>`).join('');
+  return`
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:8px">👁️ Brackets de Fase 2 — ${list.length} clasificados</div>
+      <select onchange="f2allSel=this.value;renderApp()" style="width:100%;padding:10px 12px;border:2px solid var(--lgray);border-radius:8px;font-size:.9rem;outline:none">${opts}</select>
+      <div class="sm" style="margin-top:8px">Pts Fase 2: <b>${selRow.pts}</b> · Cargó <b>${selRow.done}/31</b> · Campeón: <b style="color:var(--gold)">${champ||'—'}</b></div>
+      <p class="sm muted" style="margin:6px 0 0">${Object.keys(f2results).length?'Verde = acertó · rojo = falló.':'Cuando se carguen resultados se pintan aciertos y fallos.'}</p>
+    </div>
+    <div class="card" style="padding:14px 10px">
+      <div class="cz-hint">👉 Deslizá para ver toda la llave</div>
+      ${f2buildReadonly(f2preds[sel]||{})}
+    </div>`;
+}
+
+// Planilla de transparencia de Fase 2: todos los partidos del cuadro × jugadores (pick + ganador real + puntos + totales)
+function viewF2Planilla(){
+  if(!Object.keys(f2bracket).length)
+    return`<div class="card"><div class="alert alert-info tc" style="padding:24px">La Fase 2 todavía no está configurada.</div></div>`;
+  if(!f2cfg.locked&&!currentUser.isAdmin)
+    return`<div class="card"><div class="alert alert-info tc" style="padding:24px">🔒 La planilla se habilita cuando el organizador cierre los picks de la Fase 2.</div></div>`;
+  const base=(f2qualifiers&&f2qualifiers.length)?f2qualifiers:Object.keys(allUsers).filter(u=>!(allUsers[u]||{}).isAdmin);
+  const ids=base.filter(uid=>f2preds[uid]&&Object.keys(f2preds[uid]).length);
+  if(!ids.length)
+    return`<div class="card"><div class="alert alert-warn tc" style="padding:24px">Todavía nadie cargó su bracket de Fase 2.</div></div>`;
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const order=ids.map(uid=>{const u=allUsers[uid]||{};return{uid,name:u.displayName||u.username||uid,pts:f2calcScore(uid)};})
+    .sort((a,b)=>b.pts-a.pts||a.name.localeCompare(b.name));
+  const cols=order.length+2;
+  const realTeams=mid=>{
+    if(mid.startsWith('r1')){const b=f2bracket[mid]||{};return[b.home||'?',b.away||'?'];}
+    const[a,b]=BRACKET_FEED[mid];return[f2results[a]||'?',f2results[b]||'?'];
+  };
+  const head=`<tr><th style="text-align:left">Partido</th><th>Pasa</th>${order.map(p=>`<th title="${esc(p.name)}">${esc(p.name.split(' ')[0])}</th>`).join('')}</tr>`;
+  const totals=`<tr class="pm-total"><td style="text-align:left">TOTAL</td><td class="tc">pts</td>${order.map(p=>`<td class="tc">${p.pts}</td>`).join('')}</tr>`;
+  let body=totals;
+  ['r1','r2','r3','r4','r5'].forEach(round=>{
+    const count=BRACKET_COUNTS[round],pts=BRACKET_PTS[round];
+    body+=`<tr class="pm-grp-header"><td colspan="${cols}">${F2_SHORT[round]} · ${pts} pts c/u</td></tr>`;
+    for(let i=1;i<=count;i++){
+      const mid=round+'m'+i,tt=realTeams(mid),real=f2results[mid];
+      const label=(tt[0]==='?'&&tt[1]==='?')?`<span class="muted">Partido ${i}</span>`:`${esc(tt[0])}&nbsp;vs&nbsp;${esc(tt[1])}`;
+      const realHtml=real?`<b>${esc(real)}</b>`:'<span class="muted">–</span>';
+      body+=`<tr><td style="white-space:nowrap">${label}</td><td class="tc">${realHtml}</td>${order.map(p=>{
+        const pick=(f2preds[p.uid]||{})[mid];
+        if(!pick)return`<td class="tc muted">–</td>`;
+        let bg='';if(real)bg=pick===real?'background:#dcfce7':'background:#fef2f2';
+        const got=real&&pick===real?`<br><span class="xs muted">+${pts}</span>`:'';
+        return`<td class="tc" style="${bg}">${esc(pick)}${got}</td>`;
+      }).join('')}</tr>`;
+    }
+  });
+  return`
+    <div class="card">
+      <div class="card-title">👁️ Ver todos F2 — pronósticos de los 32</div>
+      <p class="sm muted">Cada partido del cuadro, quién pasó de verdad, el pick de cada jugador y los puntos que saca. <b style="background:#dcfce7;padding:0 4px;border-radius:3px">verde</b> acertó · <b style="background:#fef2f2;padding:0 4px;border-radius:3px">rojo</b> falló. Puntos: 16avos 3 · 8avos 6 · cuartos 6 · semis 8 · final 12.</p>
+    </div>
+    <div class="card" style="padding:10px">
+      <div style="overflow:auto;max-height:78vh">
+        <table class="pm pm-sheet"><thead>${head}</thead><tbody>${body}</tbody></table>
+      </div>
+    </div>`;
+}
+
+// Cuadro OFICIAL de Fase 2 (Clasificados F2): se va llenando con los resultados reales (en verde el que pasó)
+function f2esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function oficialCell(name,winner){
+  if(!name)return `<button class="cz-team empty" disabled>Por definir</button>`;
+  const cls='cz-team'+(winner&&winner===name?' win':'');
+  return `<button class="${cls}" disabled style="cursor:default" title="${f2esc(name)}">${f2esc(name)}</button>`;
+}
+function buildOficialHTML(){
+  let html='<div class="cz-wrap"><div class="cz">';
+  ['r1','r2','r3','r4','r5'].forEach((round,ri)=>{
+    const slotH=F2_BASE*Math.pow(2,ri),count=BRACKET_COUNTS[round];
+    let col=`<div class="cz-col"><div class="cz-h">${F2_SHORT[round]}</div>`;
+    for(let i=1;i<=count;i++){
+      const mid=round+'m'+i;let tA,tB;
+      if(mid.startsWith('r1')){const b=f2bracket[mid]||{};tA=b.home||null;tB=b.away||null;}
+      else{const[a,b]=BRACKET_FEED[mid];tA=f2results[a]||null;tB=f2results[b]||null;}
+      const win=f2results[mid];
+      col+=`<div class="cz-slot" style="height:${slotH}px">`;
+      if(ri>0)col+=`<div class="cz-conn" style="height:${slotH/2}px"></div>`;
+      col+=`<div class="cz-cell">${oficialCell(tA,win)}${oficialCell(tB,win)}</div></div>`;
+    }
+    html+=col+'</div>';
+  });
+  const champ=f2results['r5m1'];
+  html+=`<div class="cz-col"><div class="cz-h">🏆 Campeón</div><div class="cz-slot" style="height:${F2_BASE*16}px"><div class="cz-conn1"></div><div class="cz-champ ${champ?'ok':''}">${champ?f2esc(champ):'—'}</div></div></div>`;
+  return html+'</div></div>';
+}
+function viewF2Clasif(){
+  if(!Object.keys(f2bracket).length)
+    return`<div class="card"><div class="alert alert-info tc" style="padding:24px">La Fase 2 todavía no está disponible. El cuadro se arma al terminar la fase de grupos.</div></div>`;
+  let played=0;['r1','r2','r3','r4','r5'].forEach(r=>{for(let i=1;i<=BRACKET_COUNTS[r];i++)if(f2results[r+'m'+i])played++;});
+  const champ=f2results['r5m1'];
+  return`
+    <div class="card">
+      <div class="card-title">🏅 Clasificados F2 — cuadro oficial</div>
+      <p class="sm muted">Cómo se va completando el cuadro con los resultados reales (en <b style="color:var(--green)">verde</b> el que pasó). ${champ?('🏆 Campeón: <b style="color:var(--gold)">'+f2esc(champ)+'</b>'):('Definidos '+played+'/31 partidos')}.</p>
+    </div>
+    <div class="card" style="padding:14px 10px">
+      <div class="cz-hint">👉 Deslizá para ver toda la llave</div>
+      ${buildOficialHTML()}
+    </div>`;
 }
 
 // ── Admin: configurar bracket 16avos ──
@@ -1578,7 +1927,17 @@ function viewF2AdminPanel(){
     ${classifHTML}
     <button class="btn btn-gold btn-sm mb2" onclick="toggleEl('f2setup')">⚙️ Configurar 16avos</button>
     <div id="f2setup" class="hidden" style="background:#f9fafb;padding:14px;border-radius:8px;margin-bottom:10px">
-      <p class="sm muted mb2">Ingresá los 32 equipos que juegan los 16avos de final:</p>
+      <div class="alert ${Object.keys(f2bracketStored).length?'alert-warn':'alert-ok'} sm mb2">
+        ${Object.keys(f2bracketStored).length
+          ?'✏️ Modo <b>manual</b> (override): se usa lo que cargaste acá. Tocá "Volver a automático" para descartarlo y recalcular solo.'
+          :'⚙️ Modo <b>automático</b>: los 16avos se completan solos cuando termina la fase de grupos. Entrá acá únicamente si querés corregir un cruce a mano.'}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn btn-pri btn-sm" onclick="autollenarF2Bracket()">🔄 Recalcular desde grupos</button>
+        ${Object.keys(f2bracketStored).length?'<button class="btn btn-out btn-sm" onclick="volverAutoF2Bracket()">↩️ Volver a automático</button>':''}
+      </div>
+      <div id="f2autoinfo"></div>
+      <p class="sm muted mb2">Cruces actuales (editá solo si hace falta y tocá Guardar para fijarlos como override):</p>
       ${matchInputs}
       <button class="btn btn-pri btn-sm mt1" onclick="saveF2Bracket()">💾 Guardar 16avos</button>
     </div>
@@ -1591,6 +1950,31 @@ function viewF2AdminPanel(){
   </div>`;
 }
 function toggleEl(id){document.getElementById(id)?.classList.toggle('hidden');}
+// Autocompleta los 16 cruces desde los resultados de grupos y muestra el orden de los terceros.
+// NO guarda: llena los campos para que el admin revise/edite y luego toque "Guardar 16avos".
+function autollenarF2Bracket(){
+  const grpDone=g=>PARTIDOS.filter(m=>m.grupo===g.id).every(m=>{const r=allResults[m.id];return r&&r.home!=null&&r.home!==''&&r.away!=null&&r.away!=='';});
+  const completos=GRUPOS.filter(grpDone).length;
+  const r=calcularR32Auto();
+  for(let i=1;i<=16;i++){
+    const mid='r1m'+i,b=r.bracket[mid]||{home:'',away:''};
+    const h=document.getElementById('f2h_'+mid),a=document.getElementById('f2a_'+mid);
+    if(h)h.value=b.home||'';if(a)a.value=b.away||'';
+  }
+  const info=document.getElementById('f2autoinfo');
+  if(info){
+    if(!r.thirdAssign){
+      info.innerHTML='<div class="alert alert-err sm mb2">⚠️ No se pudieron asignar los 8 terceros respetando los grupos habilitados. Revisá los cruces a mano.</div>';
+    }else{
+      const slotWin={};F2_THIRD_SLOTS.forEach(s=>{if(r.thirdAssign[s.r32])slotWin[r.thirdAssign[s.r32]]=s.win;});
+      const rows=r.thirds.map((t,i)=>{const q=i<8,gd=(t.GD>=0?'+':'')+t.GD;
+        return`<tr style="${q?'':'opacity:.45'}"><td class="tc">${i+1}</td><td>${t.name}</td><td class="tc">${t.groupId}</td><td class="tc bold">${t.Pts}</td><td class="tc">${gd}</td><td class="tc">${t.GF}</td><td class="sm">${q?(slotWin[t.groupId]?('→ 1°'+slotWin[t.groupId]):'✓'):'eliminado'}</td></tr>`;}).join('');
+      info.innerHTML=`<div class="alert alert-info sm mb2"><b>Orden de los mejores 3°</b> — criterios: 1) Puntos · 2) Dif. de gol · 3) Goles a favor · 4) conducta (tarjetas) · 5) ranking FIFA. Los 2 últimos no se calculan acá: si dos quedan iguales hasta GF, ajustá a mano. Los 8 mejores se cruzan respetando los grupos habilitados por FIFA (sin revancha del mismo grupo).</div>
+      <div style="overflow-x:auto;margin-bottom:10px"><table class="rt" style="font-size:.74rem"><thead><tr><th>#</th><th>3° lugar</th><th>Gr</th><th>Pts</th><th>Dif</th><th>GF</th><th>Cruce</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+  }
+  toast(completos<12?`⚠️ ${completos}/12 grupos completos — revisá los cruces antes de guardar`:'✅ 16avos autocompletados — revisá y guardá','info');
+}
 async function saveF2Bracket(){
   const data={};
   for(let i=1;i<=16;i++){
@@ -1600,8 +1984,14 @@ async function saveF2Bracket(){
     if(h&&a)data[mid]={home:h,away:a};
   }
   await dbSet('f2/bracket',data);
-  f2bracket=data;
-  toast('✅ 16avos guardados','ok');renderApp();
+  f2bracketStored=data;recomputeF2Bracket();
+  toast('✅ 16avos guardados (override manual)','ok');renderApp();
+}
+async function volverAutoF2Bracket(){
+  if(!confirm('¿Volver al cuadro automático? Se descarta tu carga manual y los 16avos se recalculan solos desde los resultados de grupos.'))return;
+  await dbSet('f2/bracket',{});
+  f2bracketStored={};recomputeF2Bracket();
+  toast('↩️ 16avos en modo automático','ok');renderApp();
 }
 async function saveF2Results(){
   const data={...f2results};
@@ -1665,6 +2055,7 @@ function viewResults(){
   html+=`<div class="save-bar">
     <span class="sm muted">${PARTIDOS.filter(m=>allResults[m.id]).length} resultados cargados</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-out" onclick="borrarUltimaFechaGrupos()">🧹 Borrar última fecha (2 × grupo)</button>
       <button class="btn btn-red" onclick="clearResults()">🗑️ Borrar todos los resultados</button>
       <button class="btn btn-pri" onclick="saveResults()">💾 Guardar resultados</button>
     </div>
@@ -1672,12 +2063,32 @@ function viewResults(){
   return html;
 }
 
+// Borra los resultados de los 2 últimos partidos (fecha 3) de cada grupo de Fase 1
+async function borrarUltimaFechaGrupos(){
+  const targets=[];
+  for(const g of GRUPOS){
+    const ms=PARTIDOS.filter(m=>m.grupo===g.id).slice().sort((a,b)=>{
+      const da=a.date.split('/').reverse().join(''),db=b.date.split('/').reverse().join('');
+      if(da!==db)return da<db?-1:1;return a.time<b.time?-1:1;
+    });
+    ms.slice(-2).forEach(m=>targets.push(m.id));
+  }
+  const have=targets.filter(id=>allResults[id]);
+  if(!have.length){toast('No hay resultados cargados en la última fecha de los grupos','info');return;}
+  if(!confirm(`¿Borrar los resultados de los ${have.length} partidos de la última fecha (los 2 últimos de cada grupo)? Se recalculan tablas, clasificados y el cuadro. No se puede deshacer.`))return;
+  const saved={...allResults};
+  targets.forEach(id=>{delete saved[id];});
+  await dbSet('results',saved);
+  allResults=saved;recomputeF2Bracket();
+  toast(`🗑️ Borrados ${have.length} resultados de la última fecha`,'ok');
+  renderApp();
+}
 async function clearResults(){
   const n=PARTIDOS.filter(m=>allResults[m.id]).length;
   if(n===0){toast('No hay resultados cargados','info');return;}
   if(!confirm(`¿Borrar TODOS los resultados cargados (${n})? Esto vacía los marcadores y los puntajes vuelven a cero. No se puede deshacer.`))return;
   await dbSet('results',{});
-  allResults={};
+  allResults={};recomputeF2Bracket();
   toast('🗑️ Todos los resultados fueron borrados','ok');
   renderApp();
 }
@@ -1688,8 +2099,8 @@ async function saveResults(){
     const hEl=document.getElementById('rh_'+m.id),aEl=document.getElementById('ra_'+m.id);
     if(hEl&&aEl&&hEl.value!==''&&aEl.value!=='')saved[m.id]={home:+hEl.value,away:+aEl.value};
   }
-  await dbSet('results',saved);allResults=saved;
-  toast('✅ Resultados guardados','ok');
+  await dbSet('results',saved);allResults=saved;recomputeF2Bracket();
+  toast(todosGruposCompletos()?'✅ Resultados guardados — 16avos generados automáticamente':'✅ Resultados guardados','ok');
 }
 
 // =============================================================================
