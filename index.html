@@ -325,6 +325,9 @@
     .pm-sheet th,.pm-sheet td{overflow:hidden;text-overflow:ellipsis}
     .pm-sheet td:first-child{white-space:normal;line-height:1.2}
     .pm-sheet thead th{white-space:normal;word-break:break-word;vertical-align:bottom;line-height:1.15}
+    .pm-sheet td{padding:2px 6px;line-height:1.1;font-size:.76rem}
+    .pm-sheet th{padding:4px 6px}
+    .pm-sheet .pm-grp-header td{padding:3px 6px}
 
     /* ── Grids ── */
     .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -1537,7 +1540,7 @@ function viewAll(){
   const order=players.map(([uid,u])=>({uid,name:u.displayName||u.username||uid,sc:userScore(uid)}));
   const nPlayed=PARTIDOS.filter(m=>allResults[m.id]).length;
   const cols=order.length+2;
-  const colg=`<colgroup><col style="width:150px"><col style="width:58px">${order.map(()=>'<col style="width:96px">').join('')}</colgroup>`;
+  const colg=`<colgroup><col style="width:184px"><col style="width:54px">${order.map(()=>'<col style="width:96px">').join('')}</colgroup>`;
 
   const head=`<tr><th style="text-align:left">Partido</th><th>Result.</th>${order.map(p=>`<th title="${p.name}">${p.name}</th>`).join('')}</tr>`;
   const totals=`<tr class="pm-total"><td style="text-align:left">TOTAL · ${nPlayed}/72 jugados</td><td class="tc">pts</td>${order.map(p=>`<td class="tc">${p.sc.t}</td>`).join('')}</tr>`;
@@ -1558,7 +1561,7 @@ function viewAll(){
           const pts=calcPts(pr,res);
           let bg='';
           if(pts!==null)bg=pts.t===4?'background:#dcfce7':pts.t===3?'background:#dbeafe':pts.t===1?'background:#fef9c3':'background:#fef2f2';
-          return`<td class="tc" style="${bg}">${pr.home}–${pr.away}${pts!==null?`<br><span class="xs muted">${pts.t>0?'+'+pts.t:'0'}</span>`:''}</td>`;
+          return`<td class="tc" style="${bg}">${pr.home}–${pr.away}${pts!==null?` <span class="xs muted">${pts.t>0?'+'+pts.t:'0'}</span>`:''}</td>`;
         }).join('')}
       </tr>`;
     }).join('');
