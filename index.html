@@ -1653,6 +1653,18 @@ async function saveF2Pred(){
   f2preds[uid]=data;
   toast('✅ Bracket completo guardado','ok');
 }
+// Borra el bracket de Fase 2 del usuario actual (sus propios picks). Solo si no está cerrado.
+async function clearF2Pred(){
+  if(f2cfg.locked){toast('🔒 Bracket cerrado — no se puede borrar.','info');return;}
+  const uid=currentUser.id;
+  const tiene=Object.keys(f2picks).length||(f2preds[uid]&&Object.keys(f2preds[uid]).length);
+  if(!tiene){toast('No tenés picks cargados','info');return;}
+  if(!confirm('¿Borrar todo tu bracket de Fase 2? Vas a tener que cargarlo de nuevo desde cero.'))return;
+  f2picks={};f2picksLoaded=true;
+  await dbDel('f2/preds/'+uid);
+  if(f2preds[uid])delete f2preds[uid];
+  toast('🗑️ Tu bracket fue borrado','ok');renderApp();
+}
 // Devuelve [equipoA,equipoB] de un cruce: r1 desde el bracket del admin, el resto desde los picks que van pasando
 function f2teamsFor(mid){
   if(mid.startsWith('r1')){const b=f2bracket[mid]||{};return[b.home||null,b.away||null];}
@@ -1730,7 +1742,7 @@ function viewF2Pred(){
       <div class="cz-hint">👉 Deslizá para ver toda la llave</div>
       <div id="f2wrap">${f2buildHTML()}</div>
     </div>
-    ${!f2cfg.locked?`<button class="btn btn-pri w100 mt2" onclick="saveF2Pred()">💾 Guardar bracket</button>`:''}`;
+    ${!f2cfg.locked?`<button class="btn btn-pri w100 mt2" onclick="saveF2Pred()">💾 Guardar bracket</button><button class="btn btn-out btn-sm w100 mt1" onclick="clearF2Pred()">🗑️ Borrar mi bracket</button>`:''}`;
 }
 
 // Cuadro de un participante en SOLO LECTURA (para "Brackets F2")
