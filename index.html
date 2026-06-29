@@ -329,6 +329,15 @@
     .pm-sheet td{padding:6px 8px;line-height:1.3;font-size:.8rem}
     .pm-sheet th{padding:7px 8px;font-size:.72rem}
     .pm-sheet .pm-grp-header td{padding:5px 8px}
+    /* Matriz compacta de códigos (Ver todos F2): columnas angostas para que entren los ~30 jugadores */
+    .pm-codes td{padding:5px 3px;text-align:center;font-size:.82rem;letter-spacing:.3px;font-variant:tabular-nums}
+    .pm-codes th{padding:7px 3px;font-size:.66rem;line-height:1.15}
+    .pm-codes td:first-child,.pm-codes th:first-child{text-align:left;padding-left:9px;padding-right:9px}
+    .pm-codes td b{font-weight:800}
+    .pm-codes .cod{font-weight:700}
+    .pm-codes .pts{display:block;font-size:.6rem;font-weight:600;line-height:1;margin-top:1px;opacity:.7}
+    .pm-codes tbody tr:not(.pm-grp-header):not(.pm-total):hover td{background:#eef4ff}
+    .pm-vs{color:#9aa3b2;font-weight:600;padding:0 2px}
 
     /* ── Grids ── */
     .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -555,6 +564,22 @@ const BRACKET_PTS={r1:3,r2:6,r3:6,r4:8,r5:12};
 const BRACKET_NAMES={r1:'16avos de Final',r2:'8avos de Final',r3:'Cuartos de Final',r4:'Semifinales',r5:'⭐ Final'};
 const BRACKET_COUNTS={r1:16,r2:8,r3:4,r4:2,r5:1};
 const F2_SHORT={r1:'16avos',r2:'8avos',r3:'Cuartos',r4:'Semis',r5:'Final'}; // títulos cortos para el cuadro
+// Códigos de 3 letras (en español, sin ambigüedad) para mostrar los 48 equipos compactos en la planilla "Ver todos F2"
+const F2_COD={
+  'México':'MEX','Sudáfrica':'SUD','Corea del Sur':'COR','Rep. Checa':'CZE',
+  'Canadá':'CAN','Bosnia y Herzegovina':'BOS','Qatar':'QAT','Suiza':'SUI',
+  'Brasil':'BRA','Marruecos':'MAR','Haití':'HAI','Escocia':'ESC',
+  'Estados Unidos':'USA','Paraguay':'PAR','Australia':'AUS','Turquía':'TUR',
+  'Alemania':'ALE','Curazao':'CUR','Costa de Marfil':'CIV','Ecuador':'ECU',
+  'Países Bajos':'HOL','Japón':'JAP','Suecia':'SUE','Túnez':'TUN',
+  'Bélgica':'BEL','Egipto':'EGI','Irán':'IRN','Nueva Zelanda':'NZL',
+  'España':'ESP','Cabo Verde':'CAB','Arabia Saudita':'ARA','Uruguay':'URU',
+  'Francia':'FRA','Senegal':'SEN','Irak':'IRK','Noruega':'NOR',
+  'Argentina':'ARG','Argelia':'ALG','Austria':'AUT','Jordania':'JOR',
+  'Portugal':'POR','RD Congo':'CGO','Uzbekistán':'UZB','Colombia':'COL',
+  'Inglaterra':'ING','Croacia':'CRO','Ghana':'GHA','Panamá':'PAN'
+};
+function f2cod(s){ if(s==null||s==='?')return '?'; return F2_COD[s]||String(s).slice(0,3).toUpperCase(); }
 const F2_BASE=60; // alto base (px) de cada slot del cuadro: 2 equipos de 26px + bordes entran sin solaparse
 
 // =============================================================================
@@ -1812,7 +1837,7 @@ function viewF2Planilla(){
   const order=ids.map(uid=>{const u=allUsers[uid]||{};return{uid,name:u.displayName||u.username||uid,pts:f2calcScore(uid)};})
     .sort((a,b)=>b.pts-a.pts||a.name.localeCompare(b.name));
   const cols=order.length+2;
-  const colg=`<colgroup><col style="width:172px"><col style="width:96px">${order.map(()=>'<col style="width:110px">').join('')}</colgroup>`;
+  const colg=`<colgroup><col style="width:118px"><col style="width:50px">${order.map(()=>'<col style="width:48px">').join('')}</colgroup>`;
   const realTeams=mid=>{
     if(mid.startsWith('r1')){const b=f2bracket[mid]||{};return[b.home||'?',b.away||'?'];}
     const[a,b]=BRACKET_FEED[mid];return[f2results[a]||'?',f2results[b]||'?'];
@@ -1825,25 +1850,25 @@ function viewF2Planilla(){
     body+=`<tr class="pm-grp-header"><td colspan="${cols}">${F2_SHORT[round]} · ${pts} pts c/u</td></tr>`;
     for(let i=1;i<=count;i++){
       const mid=round+'m'+i,tt=realTeams(mid),real=f2results[mid];
-      const label=(tt[0]==='?'&&tt[1]==='?')?`<span class="muted">Partido ${i}</span>`:`${esc(tt[0])}&nbsp;vs&nbsp;${esc(tt[1])}`;
-      const realHtml=real?`<b>${esc(real)}</b>`:'<span class="muted">–</span>';
-      body+=`<tr><td style="white-space:nowrap">${label}</td><td class="tc">${realHtml}</td>${order.map(p=>{
+      const label=(tt[0]==='?'&&tt[1]==='?')?`<span class="muted">Partido ${i}</span>`:`<span title="${esc(tt[0])} vs ${esc(tt[1])}"><span class="cod">${f2cod(tt[0])}</span><span class="pm-vs">v</span><span class="cod">${f2cod(tt[1])}</span></span>`;
+      const realHtml=real?`<b title="${esc(real)}">${f2cod(real)}</b>`:'<span class="muted">–</span>';
+      body+=`<tr><td style="white-space:nowrap">${label}</td><td>${realHtml}</td>${order.map(p=>{
         const pick=(f2preds[p.uid]||{})[mid];
-        if(!pick)return`<td class="tc muted">–</td>`;
-        let bg='';if(real)bg=pick===real?'background:#dcfce7':'background:#fef2f2';
-        const got=real&&pick===real?`<br><span class="xs muted">+${pts}</span>`:'';
-        return`<td class="tc" style="${bg}">${esc(pick)}${got}</td>`;
+        if(!pick)return`<td class="muted">–</td>`;
+        let bg='',fg='';if(real){if(pick===real){bg='background:#dcfce7';fg='color:#166534';}else{bg='background:#fef2f2';fg='color:#b91c1c';}}
+        const got=real&&pick===real?`<span class="pts">+${pts}</span>`:'';
+        return`<td style="${bg};${fg}" title="${esc(pick)}"><span class="cod">${f2cod(pick)}</span>${got}</td>`;
       }).join('')}</tr>`;
     }
   });
   return`
     <div class="card">
       <div class="card-title">👁️ Ver todos F2 — pronósticos de los 32</div>
-      <p class="sm muted">Cada partido del cuadro, quién pasó de verdad, el pick de cada jugador y los puntos que saca. <b style="background:#dcfce7;padding:0 4px;border-radius:3px">verde</b> acertó · <b style="background:#fef2f2;padding:0 4px;border-radius:3px">rojo</b> falló. Puntos: 16avos 3 · 8avos 6 · cuartos 6 · semis 8 · final 12.</p>
+      <p class="sm muted">Cada partido del cuadro, quién pasó de verdad, el pick de cada jugador y los puntos que saca. Los equipos van en código de 3 letras — pasá el cursor por una celda para ver el país completo. <b style="background:#dcfce7;color:#166534;padding:0 4px;border-radius:3px">verde</b> acertó · <b style="background:#fef2f2;color:#b91c1c;padding:0 4px;border-radius:3px">rojo</b> falló. Puntos: 16avos 3 · 8avos 6 · cuartos 6 · semis 8 · final 12.</p>
     </div>
     <div class="card" style="padding:10px">
       <div style="overflow:auto;max-height:78vh">
-        <table class="pm pm-sheet">${colg}<thead>${head}</thead><tbody>${body}</tbody></table>
+        <table class="pm pm-sheet pm-codes">${colg}<thead>${head}</thead><tbody>${body}</tbody></table>
       </div>
     </div>`;
 }
