@@ -360,19 +360,38 @@ def construir_r32(tables, thirds):
 
 # ── FASE 2: ganadores de eliminatorias ─────────────────────────────────────
 def ko_winner_team(m):
-    """Devuelve (homeES, awayES, ganadorES|None) de un partido de llave finalizado."""
+    """Devuelve (homeES, awayES, ganadorES|None) de un partido de llave finalizado.
+
+    Orden de prioridad para decidir quién pasa (a prueba de penales):
+      1) score.winner = HOME_TEAM/AWAY_TEAM -> es la AUTORIDAD de la API (ya incluye
+         prórroga y penales). Si está, manda.
+      2) penales (score.penalties) si están cargados y no están empatados.
+      3) Si el partido se definió por PENALES pero todavía no hay (1) ni (2),
+         devolvemos None: NO adivinamos con el marcador. Esto evita el bug en el que,
+         apenas termina el partido, la API momentáneamente trae winner="DRAW" y un
+         fullTime que refleja el resultado a los 90' (p.ej. Países Bajos 2-1 Marruecos)
+         y el bot anotaba al equipo equivocado. Se resuelve solo en la próxima corrida.
+      4) Marcador final (fullTime) SOLO para partidos de tiempo reglamentario o
+         prórroga (ahí el que va arriba es realmente el que pasa).
+    """
     sc = m.get("score", {})
     h, a = traducir(m["homeTeam"]["name"]), traducir(m["awayTeam"]["name"])
     if h is None or a is None:
         return (h, a, None)
+    # 1) ganador declarado por la API (autoridad: incluye prórroga y penales)
     w = sc.get("winner")
     if w == "HOME_TEAM":
         return (h, a, h)
     if w == "AWAY_TEAM":
         return (h, a, a)
+    # 2) definición por penales
     pen = sc.get("penalties") or {}
     if pen.get("home") is not None and pen.get("away") is not None and pen["home"] != pen["away"]:
         return (h, a, h if pen["home"] > pen["away"] else a)
+    # 3) fue a penales pero aún no hay datos firmes -> esperar (no inventar con fullTime)
+    if sc.get("duration") == "PENALTY_SHOOTOUT":
+        return (h, a, None)
+    # 4) marcador final (reglamentario / prórroga)
     ft = sc.get("fullTime") or {}
     if ft.get("home") is not None and ft.get("away") is not None and ft["home"] != ft["away"]:
         return (h, a, h if ft["home"] > ft["away"] else a)
@@ -404,6 +423,11 @@ def procesar_fase2(api_matches, all_results, f2_actuales, f2_bracket_override):
             sin_mapear.add(m["awayTeam"]["name"])
         if h and a and w:
             ko_winner[frozenset((h, a))] = w
+        elif h and a and not w:
+            # Partido de llave FINALIZADO pero sin ganador firme todavía
+            # (típico: definición por penales que la API aún no consolidó).
+            dur = (m.get("score") or {}).get("duration")
+            print(f"KO sin ganador firme aún: {h} vs {a} (duration={dur}). Se resolverá en la próxima corrida.")
     for nombre in sorted(sin_mapear):
         print(f"Equipo KO sin mapear (agregar a TEAM_MAP): {nombre!r}")
 
@@ -418,6 +442,13 @@ def procesar_fase2(api_matches, all_results, f2_actuales, f2_bracket_override):
                 continue
             if mid in f2_actuales and f2_actuales[mid]:
                 winner_of[mid] = f2_actuales[mid]
+                # Aviso si lo guardado NO coincide con lo que dice la API ahora
+                # (no se pisa lo cargado a mano, pero te avisa para revisarlo).
+                api_w = ko_winner.get(frozenset(teams))
+                if api_w and api_w in teams and api_w != f2_actuales[mid]:
+                    print(f"  ⚠️  REVISAR {mid}: guardado pasa {f2_actuales[mid]} "
+                          f"pero la API dice que pasó {api_w}. "
+                          f"Corregilo a mano (o borralo y volvé a correr el bot).")
                 continue
             w = ko_winner.get(frozenset(teams))
             if w and w in teams:
